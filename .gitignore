@@ -1,0 +1,7 @@
+# Ignore everything
+*
+
+# Whitelist these files
+!openml_to_prov.py
+!requirements.txt
+!.gitignore
