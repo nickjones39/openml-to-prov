@@ -127,6 +127,6 @@ This project is licensed under the MIT License – see the [LICENSE](LICENSE) fi
 - Built on [OpenML](https://www.openml.org/) and [scikit-learn](https://scikit-learn.org/).
 - Provenance representation via [W3C PROV](https://www.w3.org/TR/prov-dm/).
 - Graph rendering through the [`prov` Python library](https://pypi.org/project/prov/).
-- This work acknowledges the OpenML platform as described in:  
+- This work acknowledges the [OpenML](https://www.openml.org/) platform as described in:  
   Vanschoren, J., van Rijn, J. N., Bischl, B., & Torgo, L. (2017). *OpenML: networked science in machine learning.*  
   [arXiv:1708.03731](https://arxiv.org/abs/1708.03731).
