@@ -1,7 +1,7 @@
 # openml-to-prov
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.xxxxxxx.svg)](https://doi.org/10.5281/zenodo.xxxxxxx)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17007366.svg)](https://doi.org/10.5281/zenodo.17007366)
 
 **Export OpenML study tasks and runs into W3C PROV-JSON with optional PROV graph rendering for reproducible ML provenance.**
 
@@ -113,8 +113,8 @@ If you use this software, please cite:
   year         = {2025},
   publisher    = {Zenodo},
   version      = {1.0.0},
-  doi          = {10.5281/zenodo.xxxxxxx},
-  url          = {https://doi.org/10.5281/zenodo.xxxxxxx}
+  doi          = {10.5281/zenodo.17007366},
+  url          = {https://doi.org/10.5281/zenodo.17007366}
 }
 ```
 
