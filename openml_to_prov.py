@@ -34,11 +34,16 @@ import json, pathlib
 import os, hashlib
 import uuid
 import csv
+import sys
+
 from sklearn.base import clone
 from joblib import dump as joblib_dump
 import openml
 import numpy as np
 import pandas as pd
+
+from datetime import datetime
+
 
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import make_pipeline
@@ -49,8 +54,13 @@ from sklearn.model_selection import StratifiedKFold
 
 
 # --- PROV-package rendering (prov.dot) ---
-RENDER_PROV_DOT = True  # set False to disable rendering entirely
-PROV_DOT_DIR = pathlib.Path("prov_dot_png"); PROV_DOT_DIR.mkdir(exist_ok=True)
+# Enable/disable per-format emission
+RENDER_PROV_PNG = False
+RENDER_PROV_SVG = False
+
+PROV_DOT_PNG_DIR = pathlib.Path("prov_dot_png"); PROV_DOT_PNG_DIR.mkdir(exist_ok=True)
+PROV_DOT_SVG_DIR = pathlib.Path("prov_dot_svg"); PROV_DOT_SVG_DIR.mkdir(exist_ok=True)
+
 try:
     from prov.model import ProvDocument
     from prov.dot import prov_to_dot
@@ -58,10 +68,10 @@ try:
 except Exception:
     _PROV_AVAILABLE = False
 
-def render_prov_with_prov_pkg(prov_doc: dict, out_png_path: pathlib.Path) -> None:
+def render_prov_with_prov_pkg(prov_doc: dict, out_path: pathlib.Path, fmt: str = "png") -> None:
     """
-    Render a PNG using the PROV Python package (prov.model + prov.dot).
-
+    Render provenance as PNG or SVG using the PROV Python package (prov.model + prov.dot).
+    fmt ∈ {"png","svg"} (case-insensitive).
     """
     if not _PROV_AVAILABLE:
         raise RuntimeError("prov package (prov.model/prov.dot) not available")
@@ -121,22 +131,28 @@ def render_prov_with_prov_pkg(prov_doc: dict, out_png_path: pathlib.Path) -> Non
         if informed and informant:
             doc.wasInformedBy(informed, informant, other_attributes={k: v for k, v in rel.items() if k not in ("informed", "informant")})
 
-    # Produce DOT with default PROV styling and write PNG
+    # Produce DOT with default PROV styling and write image
     dot = prov_to_dot(doc)
     try:
-        dot.set_rankdir('LR')  # left-to-right layout is easier to scan
+        # BT often reads naturally for lineage-from-output; change to "TB" if preferred.
+        dot.set_rankdir('BT')
     except Exception:
         pass
 
-    out_png_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fmt = (fmt or "png").lower()
     try:
-        dot.write_png(out_png_path.as_posix())
+        if fmt == "svg":
+            dot.write_svg(out_path.as_posix())
+        else:
+            dot.write_png(out_path.as_posix())
     except Exception:
         # Fallback to Graphviz CLI if pydot backend cannot write directly
-        tmp = out_png_path.with_suffix('.dot')
+        tmp = out_path.with_suffix('.dot')
         dot.write(tmp.as_posix())
         import subprocess
-        subprocess.run(['dot', '-Tpng', tmp.as_posix(), '-o', out_png_path.as_posix()], check=True)
+        tool = "svg" if fmt == "svg" else "png"
+        subprocess.run(['dot', f'-T{tool}', tmp.as_posix(), '-o', out_path.as_posix()], check=True)
 
 #
 # OpenML 0.15.x uses sklearn_to_flow (not flow_from_sklearn)
@@ -644,14 +660,22 @@ def main():
         print(f"[{idx}/{N_TASKS}] {dataset.name} → {out}")
 
         # --- Optional PROV-package (Graphviz-style) rendering
-        if RENDER_PROV_DOT and _PROV_AVAILABLE:
-            dot_png_path = PROV_DOT_DIR / (out.stem + "_provpkg.png")
-            try:
-                render_prov_with_prov_pkg(prov, dot_png_path)
-                print(f"         PROV(dot): {dot_png_path}")
-            except Exception as e:
-                print(f"         PROV(dot) render failed: {e.__class__.__name__}: {e}")
-        elif RENDER_PROV_DOT and not _PROV_AVAILABLE:
+        if _PROV_AVAILABLE and (RENDER_PROV_PNG or RENDER_PROV_SVG):
+            if RENDER_PROV_PNG:
+                dot_png_path = PROV_DOT_PNG_DIR / (out.stem + "_provpkg.png")
+                try:
+                    render_prov_with_prov_pkg(prov, dot_png_path, fmt="png")
+                    print(f"         PROV(dot, png): {dot_png_path}")
+                except Exception as e:
+                    print(f"         PROV(dot) PNG render failed: {e.__class__.__name__}: {e}")
+            if RENDER_PROV_SVG:
+                dot_svg_path = PROV_DOT_SVG_DIR / (out.stem + "_provpkg.svg")
+                try:
+                    render_prov_with_prov_pkg(prov, dot_svg_path, fmt="svg")
+                    print(f"         PROV(dot) SVG: {dot_svg_path}")
+                except Exception as e:
+                    print(f"         PROV(dot) SVG render failed: {e.__class__.__name__}: {e}")
+        elif (RENDER_PROV_PNG or RENDER_PROV_SVG) and not _PROV_AVAILABLE:
             print("         PROV(dot) render skipped: 'prov' package not available")
 
         # --- Append summary row (create header if new)
