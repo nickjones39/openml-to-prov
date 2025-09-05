@@ -11,6 +11,8 @@
 
 Designed for research in provenance-aware machine learning, reproducibility, and provenance-based graph compression, the tool supports local execution (no uploads to OpenML servers) and emits both raw “pre-PROV” bundles and full PROV-JSON exports suitable for further analysis, visualisation, or archival.
 
+The pipeline also supports paired wall-clock measurements to quantify the runtime overhead of provenance serialisation.
+
 The script captures:
 - Datasets (metadata, targets, versions)
 - Flows and parameter settings
@@ -33,6 +35,7 @@ Optional rendering with the [`prov` Python package](https://pypi.org/project/pro
   - Rendered provenance graphs (PNG)
   - Prediction/split CSV artefacts
   - Summary CSV (nodes, edges, accuracy, sizes)
+- **Overhead measurement**: Optional paired runs (baseline vs. provenance) with CSV export of wall-clock timings.
 
 ## Installation
 
@@ -65,9 +68,52 @@ Run the script directly:
 python openml-to-prov.py --suite-id 99 --n-tasks 3
 ```
 
+```bash
+# Measure paired overhead (baseline vs provenance) for the first 10 tasks
+python openml-to-prov.py --suite-id 99 --n-tasks 10 --measure-overhead
+```
+
 **Arguments**:
 - `--suite-id` (int): OpenML suite ID (default: 99 for CC18)
 - `--n-tasks` (int): Number of tasks to process (default: 5)
+- `--no-prov` (flag): Disable provenance generation (baseline timing only).
+- `--measure-overhead` (flag): For each task, run twice (without and with provenance) and export a `timing_overhead.csv` file.
+
+### Measuring provenance overhead
+
+When `--measure-overhead` is supplied, the script executes every selected task twice — first without provenance (baseline), then with PROV‑JSON generation — and writes a results table to `timing_overhead.csv` in the project root.
+
+**Output schema (`timing_overhead.csv`):**
+- `task_id`, `dataset_id`, `dataset_name`
+- `run_id_no_prov`, `seconds_no_prov`
+- `run_id_with_prov`, `seconds_with_prov`
+- `overhead_pct` = `(seconds_with_prov - seconds_no_prov) / seconds_no_prov * 100`
+
+**Interpreting results.** Small positive values mean a longer runtime with provenance; small negative values can occur due to normal wall‑clock variability (e.g., OS scheduling and filesystem caching) and do not imply a true speed‑up from provenance. Across typical CC18 workloads, overheads cluster near 0% and are usually within a few percent.
+
+**Examples**
+```bash
+# First 5 tasks, write per‑task paired timings
+python openml-to-prov.py --n-tasks 5 --measure-overhead
+
+# Baseline only (no provenance), single pass
+python openml-to-prov.py --n-tasks 5 --no-prov
+
+# Provenance enabled (default), single pass
+python openml-to-prov.py --n-tasks 5
+```
+
+**Quick analysis (Python)**
+```python
+import pandas as pd
+df = pd.read_csv('timing_overhead.csv')
+print('n=', len(df))
+print('mean overhead % =', df['overhead_pct'].mean().round(2))
+print('median overhead % =', df['overhead_pct'].median().round(2))
+print('within ±2.5% =', (df['overhead_pct'].abs() <= 2.5).sum())
+```
+
+**Reproducibility tips.** For tighter measurements, consider: (i) closing background workloads; (ii) fixing CPU frequency/governor; (iii) pinning to a single NUMA/CPU socket; and (iv) repeating measurements to report medians.
 
 **Outputs** will be written to:
 - `prov_out/`
@@ -76,6 +122,7 @@ python openml-to-prov.py --suite-id 99 --n-tasks 3
 - `predictions_out/`
 - `splits_out/`
 - `prov_dot_png/` (if rendering enabled)
+- `timing_overhead.csv` (when `--measure-overhead` is used)
 
 ## Example
 

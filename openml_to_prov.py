@@ -35,6 +35,8 @@ import os, hashlib
 import uuid
 import csv
 import sys
+import argparse
+from time import time as _t_global
 
 from sklearn.base import clone
 from joblib import dump as joblib_dump
@@ -229,6 +231,8 @@ SPLIT_DIR.mkdir(exist_ok=True)
 PREPROV_DIR = pathlib.Path("preprov_out")
 PREPROV_DIR.mkdir(exist_ok=True)
 
+TIMING_OVERHEAD_CSV = pathlib.Path("timing_overhead.csv")
+
 
 def run_to_prov(run_id, dataset, flow_label, flow_params, flowparams_label, task_id, metrics, times, env_info, cv_config, model_info, pred_info, split_info, run_record, eval_records):
     rid = f"Run{run_id}"
@@ -395,215 +399,223 @@ def build_pipeline(X_df):
     return make_pipeline(pre, clf)
 
 
-def main():
-    suite = openml.study.get_suite(SUITE_ID)
-    print("CC18 tasks:", len(suite.tasks))
+def run_one(task_id, idx, generate_prov: bool):
+    """
+    Execute a single OpenML task end-to-end and optionally emit provenance.
+    Returns a dict with timing and identity information:
+    {
+      "task_id": int, "dataset_id": int, "dataset_name": str,
+      "run_id": str, "seconds": float
+    }
+    """
+    task    = openml.tasks.get_task(task_id)
+    dataset = task.get_dataset()
 
-    for idx, task_id in enumerate(suite.tasks[:N_TASKS], 1):
-        task    = openml.tasks.get_task(task_id)
-        dataset = task.get_dataset()
+    # Load as DataFrame to detect types
+    X, y, _, _ = dataset.get_data(
+        dataset_format="dataframe",
+        target=dataset.default_target_attribute
+    )
 
-        # Load as DataFrame to detect types
-        X, y, _, _ = dataset.get_data(
-            dataset_format="dataframe",
-            target=dataset.default_target_attribute
-        )
+    # Local pseudo run id (early for file naming)
+    run_id = uuid.uuid4().hex  # deterministic-format unique ID
 
-        # Local pseudo run id (early for file naming)
-        run_id = uuid.uuid4().hex  # deterministic-format unique ID
+    # Some CC18 sets have missing or non-binary targets — drop NA rows quickly
+    if y is not None:
+        mask = pd.notna(y)
+        X, y = X[mask], y[mask]
 
-        # Some CC18 sets have missing or non-binary targets — drop NA rows quickly
-        if y is not None:
-            mask = pd.notna(y)
-            X, y = X[mask], y[mask]
+    # Start wall-clock timer covering everything this function does
+    total_start = _t_global()
 
-        pipe = build_pipeline(X)
+    pipe = build_pipeline(X)
 
-        # Summarise key hyperparameters for label (best-effort)
-        try:
-            rf = pipe.named_steps.get("randomforestclassifier", None)
-            if rf is not None:
-                flowparams_label = f"RF({int(getattr(rf, 'n_estimators', 0))} trees, seed={getattr(rf, 'random_state', None)})"
-            else:
-                flowparams_label = "Pipeline parameters"
-        except Exception:
+    # Summarise key hyperparameters for label (best-effort)
+    try:
+        rf = pipe.named_steps.get("randomforestclassifier", None)
+        if rf is not None:
+            flowparams_label = f"RF({int(getattr(rf, 'n_estimators', 0))} trees, seed={getattr(rf, 'random_state', None)})"
+        else:
             flowparams_label = "Pipeline parameters"
+    except Exception:
+        flowparams_label = "Pipeline parameters"
 
-        import sys, platform, sklearn, numpy as _np, pandas as _pd
+    import sys, platform, sklearn, numpy as _np, pandas as _pd
 
-        # Train timing on full data (separate pipeline instance to avoid CV leakage)
-        pipe_train = build_pipeline(X)
-        from time import time as _t
-        t0 = _t(); pipe_train.fit(X, y); t1 = _t()
-        # Enrich model metadata with feature count and classes (best-effort)
-        try:
-            preproc = pipe_train.named_steps.get("columntransformer", None)
-            if preproc is not None and hasattr(preproc, "get_feature_names_out"):
-                feature_count = int(len(preproc.get_feature_names_out()))
-            else:
-                feature_count = None
-        except Exception:
+    # Train timing on full data (separate pipeline instance to avoid CV leakage)
+    pipe_train = build_pipeline(X)
+    from time import time as _t
+    t0 = _t(); pipe_train.fit(X, y); t1 = _t()
+    # Enrich model metadata with feature count and classes (best-effort)
+    try:
+        preproc = pipe_train.named_steps.get("columntransformer", None)
+        if preproc is not None and hasattr(preproc, "get_feature_names_out"):
+            feature_count = int(len(preproc.get_feature_names_out()))
+        else:
             feature_count = None
+    except Exception:
+        feature_count = None
+    try:
+        classes = sorted(pd.unique(y).tolist()) if y is not None else None
+    except Exception:
+        classes = None
+
+    model_path = MODELS_DIR / f"model_{run_id}.joblib"
+    try:
+        joblib_dump(pipe_train, model_path)
+        size_bytes = os.path.getsize(model_path)
+        sha256 = hashlib.sha256()
+        with open(model_path, "rb") as _fh:
+            for chunk in iter(lambda: _fh.read(1024 * 1024), b""):
+                sha256.update(chunk)
+        model_info = {"path": str(model_path.resolve()), "size_bytes": int(size_bytes), "sha256": sha256.hexdigest()}
+    except Exception:
+        model_info = {"path": None, "size_bytes": None, "sha256": None}
+
+    # Also record a portable (relative) path for provenance viewers
+    if model_path:
+        model_info["prov_location"] = str(model_path)
+    else:
+        model_info["prov_location"] = None
+    if model_info is not None:
+        model_info["feature_count"] = feature_count
+        model_info["classes"] = classes
+
+    # Predict timing on a manageable slice
+    n_pred = int(min(len(X), 10000))
+    t2 = _t(); _ = pipe_train.predict(X.iloc[:n_pred]); t3 = _t()
+
+    cv   = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    split_path = SPLIT_DIR / f"splits_{run_id}.csv"
+    pred_path = PRED_DIR / f"preds_{run_id}.csv"
+    per_fold = []
+    t4 = _t()
+    total_pred_rows = 0
+    with open(pred_path, "w", newline="") as _csvfh, open(split_path, "w", newline="") as _splitfh:
+        writer = csv.writer(_csvfh)
+        split_writer = csv.writer(_splitfh)
+        writer.writerow(["row_index", "fold", "y_true", "y_pred"])
+        split_writer.writerow(["row_index", "fold"])
+        fold_id = 0
+        for fold_id, (tr, te) in enumerate(cv.split(X, y), 1):
+            model = clone(pipe)
+            model.fit(X.iloc[tr], y.iloc[tr])
+            y_true = y.iloc[te]
+            y_pred = model.predict(X.iloc[te])
+            # Write predictions rows
+            for idx_row, yt, yp in zip(y_true.index.tolist(), y_true.tolist(), y_pred.tolist()):
+                writer.writerow([idx_row, fold_id, yt, yp])
+            # Write split indices rows
+            for idx_row in y_true.index.tolist():
+                split_writer.writerow([idx_row, fold_id])
+            # Accuracy per fold
+            import numpy as _np_local
+            acc = float((_np_local.array(y_pred) == _np_local.array(y_true)).mean())
+            per_fold.append({"fold": int(fold_id), "n": int(len(te)), "predictive_accuracy": round(acc, 6)})
+            total_pred_rows += int(len(y_true))
+    t5 = _t()
+    # Record predictions row count and folds
+    pred_info_extra_rows = total_pred_rows
+    pred_info_extra_folds = int(fold_id)
+    # Aggregate metrics
+    import numpy as _np_agg
+    accs = _np_agg.array([pf["predictive_accuracy"] for pf in per_fold], dtype=float)
+    metrics = {
+        "openml:accuracy": round(float(accs.mean()), 6),
+        "openml:std": round(float(accs.std(ddof=0)), 6)
+    }
+    # Predictions artefact metadata
+    try:
+        size_bytes_p = os.path.getsize(pred_path)
+        sha256_p = hashlib.sha256()
+        with open(pred_path, "rb") as _pfh:
+            for chunk in iter(lambda: _pfh.read(1024 * 1024), b""):
+                sha256_p.update(chunk)
+        pred_info = {"prov_location": str(pred_path), "path": str(pred_path.resolve()), "size_bytes": int(size_bytes_p), "sha256": sha256_p.hexdigest()}
+    except Exception:
+        pred_info = {"prov_location": None, "path": None, "size_bytes": None, "sha256": None}
+    pred_info["rows"] = pred_info_extra_rows
+    pred_info["folds"] = pred_info_extra_folds
+
+    # Split indices artefact metadata
+    try:
+        size_bytes_s = os.path.getsize(split_path)
+        sha256_s = hashlib.sha256()
+        with open(split_path, "rb") as _sfh:
+            for chunk in iter(lambda: _sfh.read(1024 * 1024), b""):
+                sha256_s.update(chunk)
+        split_info = {"prov_location": str(split_path), "path": str(split_path.resolve()), "size_bytes": int(size_bytes_s), "sha256": sha256_s.hexdigest()}
+    except Exception:
+        split_info = {"prov_location": None, "path": None, "sha256": None, "size_bytes": None}
+
+    # “Flow” label/params without contacting the server
+    if sklearn_to_flow is not None:
+        flow = sklearn_to_flow(pipe)
+        flow_label   = flow.name
+        flow_params  = _to_jsonable(flow.parameters)
+    else:
+        # Fallback: avoid OpenML flow object; use pipeline metadata directly
+        flow = None
+        flow_label  = pipe.__class__.__name__
         try:
-            classes = sorted(pd.unique(y).tolist()) if y is not None else None
+            flow_params = _to_jsonable(pipe.get_params(deep=False))
         except Exception:
-            classes = None
+            flow_params = {}
 
-        model_path = MODELS_DIR / f"model_{run_id}.joblib"
-        try:
-            joblib_dump(pipe_train, model_path)
-            size_bytes = os.path.getsize(model_path)
-            sha256 = hashlib.sha256()
-            with open(model_path, "rb") as _fh:
-                for chunk in iter(lambda: _fh.read(1024 * 1024), b""):
-                    sha256.update(chunk)
-            model_info = {"path": str(model_path.resolve()), "size_bytes": int(size_bytes), "sha256": sha256.hexdigest()}
-        except Exception:
-            model_info = {"path": None, "size_bytes": None, "sha256": None}
+    # Pseudo flow_id from canonical flow parameters (content hash)
+    _flowparams_canonical_main = json.dumps(flow_params, sort_keys=True, separators=(",", ":"))
+    flow_id_hash = hashlib.sha256(_flowparams_canonical_main.encode("utf-8")).hexdigest()
 
-        # Also record a portable (relative) path for provenance viewers
-        if model_path:
-            model_info["prov_location"] = str(model_path)
-        else:
-            model_info["prov_location"] = None
-        if model_info is not None:
-            model_info["feature_count"] = feature_count
-            model_info["classes"] = classes
+    # Build evaluation + timing + environment + run record before pre-PROV
+    # Per-fold and aggregate evaluation records
+    eval_records = [{"function": "predictive_accuracy", "fold": pf["fold"], "value": pf["predictive_accuracy"], "n": pf["n"]} for pf in per_fold]
+    eval_records.append({"function": "predictive_accuracy", "aggregate": "mean", "value": metrics["openml:accuracy"], "stdev": metrics["openml:std"]})
 
-        # Predict timing on a manageable slice
-        n_pred = int(min(len(X), 10000))
-        t2 = _t(); _ = pipe_train.predict(X.iloc[:n_pred]); t3 = _t()
+    # CV config summary
+    cv_config = {"n_splits": int(cv.get_n_splits()), "shuffle": bool(cv.shuffle), "random_state": int(cv.random_state) if cv.random_state is not None else None}
 
-        cv   = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-        split_path = SPLIT_DIR / f"splits_{run_id}.csv"
-        pred_path = PRED_DIR / f"preds_{run_id}.csv"
-        per_fold = []
-        t4 = _t()
-        total_pred_rows = 0
-        with open(pred_path, "w", newline="") as _csvfh, open(split_path, "w", newline="") as _splitfh:
-            writer = csv.writer(_csvfh)
-            split_writer = csv.writer(_splitfh)
-            writer.writerow(["row_index", "fold", "y_true", "y_pred"])
-            split_writer.writerow(["row_index", "fold"])
-            fold_id = 0
-            for fold_id, (tr, te) in enumerate(cv.split(X, y), 1):
-                model = clone(pipe)
-                model.fit(X.iloc[tr], y.iloc[tr])
-                y_true = y.iloc[te]
-                y_pred = model.predict(X.iloc[te])
-                # Write predictions rows
-                for idx_row, yt, yp in zip(y_true.index.tolist(), y_true.tolist(), y_pred.tolist()):
-                    writer.writerow([idx_row, fold_id, yt, yp])
-                # Write split indices rows
-                for idx_row in y_true.index.tolist():
-                    split_writer.writerow([idx_row, fold_id])
-                # Accuracy per fold
-                import numpy as _np_local
-                acc = float((_np_local.array(y_pred) == _np_local.array(y_true)).mean())
-                per_fold.append({"fold": int(fold_id), "n": int(len(te)), "predictive_accuracy": round(acc, 6)})
-                total_pred_rows += int(len(y_true))
-        t5 = _t()
-        # Record predictions row count and folds
-        pred_info_extra_rows = total_pred_rows
-        pred_info_extra_folds = int(fold_id)
-        # Aggregate metrics
-        import numpy as _np_agg
-        accs = _np_agg.array([pf["predictive_accuracy"] for pf in per_fold], dtype=float)
-        metrics = {
-            "openml:accuracy": round(float(accs.mean()), 6),
-            "openml:std": round(float(accs.std(ddof=0)), 6)
+    # ISO timestamps for phases
+    def _iso(ts):
+        import datetime as _dt
+        return _dt.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%dT%H:%M:%SZ")
+    times = {
+        "train_start": _iso(t0), "train_end": _iso(t1),
+        "predict_start": _iso(t2), "predict_end": _iso(t3),
+        "eval_start": _iso(t4), "eval_end": _iso(t5)
+    }
+
+    # Environment snapshot (versions/platform)
+    import sys as _sys_env, platform as _platform_env, sklearn as _sk_env, numpy as _np_env, pandas as _pd_env
+    env_info = {
+        "python": _sys_env.version.split()[0],
+        "platform": _platform_env.platform(),
+        "sklearn": _sk_env.__version__,
+        "numpy": _np_env.__version__,
+        "pandas": _pd_env.__version__,
+        "openml": openml.__version__
+    }
+
+    # Concrete (local) run record stub
+    run_record = {
+        "run_id": str(run_id),
+        "task_id": int(task_id),
+        "flow_id": flow_id_hash,
+        "flow_name": flow_label,
+        "parameter_settings": _flatten_params(pipe),
+        "start_time": times["train_start"],
+        "end_time": times["eval_end"],
+        "uploader": None,
+        "server_start_time": None,
+        "server_end_time": None,
+        "files": {
+            "predictions": pred_info.get("prov_location"),
+            "model": model_info.get("prov_location"),
+            "log": None
         }
-        # Predictions artefact metadata
-        try:
-            size_bytes_p = os.path.getsize(pred_path)
-            sha256_p = hashlib.sha256()
-            with open(pred_path, "rb") as _pfh:
-                for chunk in iter(lambda: _pfh.read(1024 * 1024), b""):
-                    sha256_p.update(chunk)
-            pred_info = {"prov_location": str(pred_path), "path": str(pred_path.resolve()), "size_bytes": int(size_bytes_p), "sha256": sha256_p.hexdigest()}
-        except Exception:
-            pred_info = {"prov_location": None, "path": None, "size_bytes": None, "sha256": None}
-        pred_info["rows"] = pred_info_extra_rows
-        pred_info["folds"] = pred_info_extra_folds
+    }
 
-        # Split indices artefact metadata
-        try:
-            size_bytes_s = os.path.getsize(split_path)
-            sha256_s = hashlib.sha256()
-            with open(split_path, "rb") as _sfh:
-                for chunk in iter(lambda: _sfh.read(1024 * 1024), b""):
-                    sha256_s.update(chunk)
-            split_info = {"prov_location": str(split_path), "path": str(split_path.resolve()), "size_bytes": int(size_bytes_s), "sha256": sha256_s.hexdigest()}
-        except Exception:
-            split_info = {"prov_location": None, "path": None, "size_bytes": None, "sha256": None}
-
-        # “Flow” label/params without contacting the server
-        if sklearn_to_flow is not None:
-            flow = sklearn_to_flow(pipe)
-            flow_label   = flow.name
-            flow_params  = _to_jsonable(flow.parameters)
-        else:
-            # Fallback: avoid OpenML flow object; use pipeline metadata directly
-            flow = None
-            flow_label  = pipe.__class__.__name__
-            try:
-                flow_params = _to_jsonable(pipe.get_params(deep=False))
-            except Exception:
-                flow_params = {}
-
-        # Pseudo flow_id from canonical flow parameters (content hash)
-        _flowparams_canonical_main = json.dumps(flow_params, sort_keys=True, separators=(",", ":"))
-        flow_id_hash = hashlib.sha256(_flowparams_canonical_main.encode("utf-8")).hexdigest()
-
-        # Build evaluation + timing + environment + run record before pre-PROV
-        # Per-fold and aggregate evaluation records
-        eval_records = [{"function": "predictive_accuracy", "fold": pf["fold"], "value": pf["predictive_accuracy"], "n": pf["n"]} for pf in per_fold]
-        eval_records.append({"function": "predictive_accuracy", "aggregate": "mean", "value": metrics["openml:accuracy"], "stdev": metrics["openml:std"]})
-
-        # CV config summary
-        cv_config = {"n_splits": int(cv.get_n_splits()), "shuffle": bool(cv.shuffle), "random_state": int(cv.random_state) if cv.random_state is not None else None}
-
-        # ISO timestamps for phases
-        def _iso(ts):
-            import datetime as _dt
-            return _dt.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%dT%H:%M:%SZ")
-        times = {
-            "train_start": _iso(t0), "train_end": _iso(t1),
-            "predict_start": _iso(t2), "predict_end": _iso(t3),
-            "eval_start": _iso(t4), "eval_end": _iso(t5)
-        }
-
-        # Environment snapshot (versions/platform)
-        import sys as _sys_env, platform as _platform_env, sklearn as _sk_env, numpy as _np_env, pandas as _pd_env
-        env_info = {
-            "python": _sys_env.version.split()[0],
-            "platform": _platform_env.platform(),
-            "sklearn": _sk_env.__version__,
-            "numpy": _np_env.__version__,
-            "pandas": _pd_env.__version__,
-            "openml": openml.__version__
-        }
-
-        # Concrete (local) run record stub
-        run_record = {
-            "run_id": str(run_id),
-            "task_id": int(task_id),
-            "flow_id": flow_id_hash,
-            "flow_name": flow_label,
-            "parameter_settings": _flatten_params(pipe),
-            "start_time": times["train_start"],
-            "end_time": times["eval_end"],
-            "uploader": None,
-            "server_start_time": None,
-            "server_end_time": None,
-            "files": {
-                "predictions": pred_info.get("prov_location"),
-                "model": model_info.get("prov_location"),
-                "log": None
-            }
-        }
-
-        # --- Build "original-form" (pre-PROV) bundle for inspection/archival
+    # --- Pre-PROV JSON bundle (optional)
+    if generate_prov:
         try:
             X_head = X.head(5).to_dict(orient="list") if hasattr(X, "head") else None
             y_head = y.head(5).tolist() if hasattr(y, "head") else None
@@ -654,10 +666,12 @@ def main():
         preprov_path.write_text(json.dumps(preprov_bundle, indent=2, ensure_ascii=False, default=str))
         print(f"         Pre-PROV bundle: {preprov_path}")
 
+    # --- PROV-JSON document and optional rendering (optional)
+    if generate_prov:
         prov = run_to_prov(run_id, dataset, flow_label, flow_params, flowparams_label, task_id, metrics, times, env_info, cv_config, model_info, pred_info, split_info, run_record, eval_records)
         out = OUT_DIR / f"openml_run_{run_id}.prov.json"
         out.write_text(json.dumps(prov, indent=2, ensure_ascii=False, default=str))
-        print(f"[{idx}/{N_TASKS}] {dataset.name} → {out}")
+        print(f"[{idx}] {dataset.name} → {out}")
 
         # --- Optional PROV-package (Graphviz-style) rendering
         if _PROV_AVAILABLE and (RENDER_PROV_PNG or RENDER_PROV_SVG):
@@ -694,6 +708,58 @@ def main():
             SUMMARY_CSV.write_text(header)
         with SUMMARY_CSV.open("a") as _fh:
             _fh.write(row)
+    else:
+        print(f"[{idx}] {dataset.name} → (provenance disabled)")
+
+    # Stop wall-clock timer and return
+    total_end = _t_global()
+    return {
+        "task_id": int(task_id),
+        "dataset_id": int(dataset.dataset_id),
+        "dataset_name": dataset.name,
+        "run_id": run_id,
+        "seconds": float(total_end - total_start)
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(description="OpenML-CC18 → W3C PROV exporter with optional overhead measurement")
+    parser.add_argument("--no-prov", action="store_true", help="Disable provenance generation (baseline timing).")
+    parser.add_argument("--measure-overhead", action="store_true", help="For each task, run twice: without and with provenance; write timing_overhead.csv.")
+    parser.add_argument("--n-tasks", type=int, default=N_TASKS, help="Number of tasks from the suite to process.")
+    args = parser.parse_args()
+
+    suite = openml.study.get_suite(SUITE_ID)
+    n_total = min(len(suite.tasks), args.n_tasks)
+    print("CC18 tasks:", len(suite.tasks), "processing:", n_total)
+
+    if args.measure_overhead:
+        # Write CSV header if needed
+        if not TIMING_OVERHEAD_CSV.exists():
+            TIMING_OVERHEAD_CSV.write_text("task_id,dataset_id,dataset_name,run_id_no_prov,seconds_no_prov,run_id_with_prov,seconds_with_prov,overhead_pct\n")
+
+        for idx, task_id in enumerate(suite.tasks[:n_total], 1):
+            # Baseline: no provenance
+            res_no = run_one(task_id, idx, generate_prov=False)
+            # With provenance
+            res_yes = run_one(task_id, idx, generate_prov=True)
+
+            # Compute percentage overhead
+            try:
+                overhead_pct = (res_yes["seconds"] - res_no["seconds"]) / res_no["seconds"] * 100.0
+            except Exception:
+                overhead_pct = float("nan")
+
+            row = f"{task_id},{res_no['dataset_id']},{res_no['dataset_name']},{res_no['run_id']},{res_no['seconds']:.6f},{res_yes['run_id']},{res_yes['seconds']:.6f},{overhead_pct:.3f}\n"
+            with TIMING_OVERHEAD_CSV.open("a") as fh:
+                fh.write(row)
+
+            print(f"[{idx}/{n_total}] {res_no['dataset_name']}: baseline={res_no['seconds']:.3f}s, with-prov={res_yes['seconds']:.3f}s, overhead={overhead_pct:.2f}%")
+    else:
+        # Single pass, possibly with provenance disabled
+        generate_prov = not args.no_prov
+        for idx, task_id in enumerate(suite.tasks[:n_total], 1):
+            _ = run_one(task_id, idx, generate_prov=generate_prov)
 
 if __name__ == "__main__":
     main()
