@@ -1,7 +1,13 @@
 # Ignore everything
 *
 
+# Whitelist package directory
+!openml_to_prov/
+!openml_to_prov/**
+
 # Whitelist these files
-!openml_to_prov.py
+!pyproject.toml
 !requirements.txt
+!README.md
+!LICENSE
 !.gitignore
