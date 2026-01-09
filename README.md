@@ -3,46 +3,69 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17007366.svg)](https://doi.org/10.5281/zenodo.17007366)
 
-**Export OpenML study tasks and runs into W3C PROV-JSON with optional PROV graph rendering for reproducible ML provenance.**
+**Generate W3C PROV-JSON provenance corpora from OpenML benchmark suites for reproducible ML provenance research.**
 
 ## Overview
 
-`openml-to-prov` is a reproducible pipeline for converting machine learning experiments from [OpenML](https://www.openml.org/) study suites (e.g., CC18, or any other suite/task) into [W3C PROV](https://www.w3.org/TR/prov-dm/) compliant JSON records. The script captures datasets, flows, models, predictions, evaluation metrics, cross-validation splits, timing, and environment metadata, and optionally renders the provenance graph using the `prov` Python package.
+`openml-to-prov` is a reproducible pipeline for generating [W3C PROV](https://www.w3.org/TR/prov-dm/) compliant JSON provenance graphs from [OpenML](https://www.openml.org/) benchmark suites (CC18, CC21, regression benchmarks). The tool captures datasets, flows, models, predictions, evaluation metrics, cross-validation splits, timing, and environment metadata.
 
-Designed for research in provenance-aware machine learning, reproducibility, and provenance-based graph compression, the tool supports local execution (no uploads to OpenML servers) and emits both raw “pre-PROV” bundles and full PROV-JSON exports suitable for further analysis, visualisation, or archival.
+Designed for research in provenance-aware machine learning, reproducibility, and **provenance-based graph compression**, the tool supports multiple corpus sizes from ~2 MB to ~2+ GB, enabling validation of compression algorithms at scale.
 
-The pipeline also supports paired wall-clock measurements to quantify the runtime overhead of provenance serialisation.
-
-The script captures:
+The pipeline captures:
 - Datasets (metadata, targets, versions)
 - Flows and parameter settings
 - Trained models (artefacts, checksums, features/classes)
-- Predictions and CV splits
+- Predictions and CV splits (per-fold granularity)
 - Evaluation metrics (per-fold + aggregate)
 - Timing and environment metadata
 - Agents and activities in PROV semantics
 
-Optional rendering with the [`prov` Python package](https://pypi.org/project/prov/) generates publication-quality provenance graphs (Graphviz).
-
 ## Features
 
-- **Generic**: Works with any OpenML suite ID (default: CC18, `suite_id=99`).
-- **Provenance fidelity**: Conforms to the W3C PROV data model.
-- **Reproducibility**: Environment and parameter capture included.
+- **Scalable corpora**: Four modes from ~2 MB to ~2+ GB for compression research
+- **Multi-suite support**: CC18, CC21, and regression benchmark tasks
+- **Provenance fidelity**: Conforms to the W3C PROV data model
+- **Reproducibility**: Environment and parameter capture included
+- **Per-fold granularity**: Separate train/predict/evaluate chains for each CV fold
+- **144 model configurations**: 12 classifiers/regressors × 12 hyperparameter settings
 - **Outputs**:
-  - PROV-JSON (`*.prov.json`)
-  - Raw “pre-PROV” bundles
-  - Rendered provenance graphs (PNG)
-  - Prediction/split CSV artefacts
-  - Summary CSV (nodes, edges, accuracy, sizes)
-- **Overhead measurement**: Optional paired runs (baseline vs. provenance) with CSV export of wall-clock timings.
+  - PROV-JSON files per run (`prov_*.json`)
+  - Corpus manifest with statistics
+  - Organized by task and model type
+
+## Corpus Modes
+
+| Mode | Tasks | Configs | Runs | Size | Use Case |
+|------|-------|---------|------|------|----------|
+| `light` | 74 | 1 | 72 | ~2.2 MB | Quick testing, CI/CD |
+| `scaled` | 74 | 144 | 10,656 | ~308 MB | Medium-scale experiments |
+| `large` | 176 | 144 | 25,344 | ~734 MB | Large-scale validation |
+| `full` | 499 | 144 | 71,856 | ~2+ GB | Production benchmarking |
+
+### Task Sources
+
+- **CC18**: OpenML-CC18 benchmark suite (74 classification tasks)
+- **CC21**: OpenML-CC21 benchmark suite (102 additional classification tasks)
+- **Regression**: CTR-23 + AutoML benchmark regression tasks (250 tasks)
+
+### Model Configurations
+
+**Classification** (12 classifiers × 12 configs = 144):
+- RandomForest, GradientBoosting, AdaBoost, ExtraTrees
+- LogisticRegression, SVM, KNN, MLP
+- DecisionTree, NaiveBayes, BaggingClassifier, HistGradientBoosting
+
+**Regression** (12 regressors × 12 configs = 144):
+- RandomForestRegressor, GradientBoostingRegressor, AdaBoostRegressor, ExtraTreesRegressor
+- Ridge, Lasso, ElasticNet, SVR
+- KNeighborsRegressor, MLPRegressor, DecisionTreeRegressor, HistGradientBoostingRegressor
 
 ## Installation
 
-Clone the repository and install dependencies in a fresh environment:
+Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/<your-username>/openml-to-prov.git
+git clone https://github.com/nickjones39/openml-to-prov.git
 cd openml-to-prov
 
 # Conda example
@@ -52,102 +75,212 @@ pip install -r requirements.txt
 ```
 
 **Dependencies**:
+- `numpy`
+
+**Optional** (for original OpenML integration):
 - `openml`
 - `scikit-learn`
-- `numpy`
 - `pandas`
 - `joblib`
-- `prov` (optional, for rendering)
-- `graphviz` (optional, for rendering)
+- `prov` (for rendering)
+- `graphviz` (for rendering)
 
 ## Usage
 
-Run the script directly:
+### Command Line
 
 ```bash
-python openml-to-prov.py --suite-id 99 --n-tasks 3
+# Generate light corpus (~2.2 MB, 72 runs)
+python -m openml_to_prov --mode light
+
+# Generate scaled corpus (~308 MB, 10,656 runs)
+python -m openml_to_prov --mode scaled
+
+# Generate large corpus (~734 MB, 25,344 runs)
+python -m openml_to_prov --mode large
+
+# Generate full corpus (~2+ GB, 71,856 runs)
+python -m openml_to_prov --mode full
 ```
+
+### Options
 
 ```bash
-# Measure paired overhead (baseline vs provenance) for the first 10 tasks
-python openml-to-prov.py --suite-id 99 --n-tasks 10 --measure-overhead
+python -m openml_to_prov --mode full --output my_corpus   # Custom output directory
+python -m openml_to_prov --mode full --compact            # Minified JSON (smaller files)
+python -m openml_to_prov --mode full --quiet              # Suppress progress output
+python -m openml_to_prov --mode full --max-tasks 10       # Limit tasks (for testing)
 ```
 
-**Arguments**:
-- `--suite-id` (int): OpenML suite ID (default: 99 for CC18)
-- `--n-tasks` (int): Number of tasks to process (default: 5)
-- `--no-prov` (flag): Disable provenance generation (baseline timing only).
-- `--measure-overhead` (flag): For each task, run twice (without and with provenance) and export a `timing_overhead.csv` file.
+### Programmatic API
 
-### Measuring provenance overhead
-
-When `--measure-overhead` is supplied, the script executes every selected task twice — first without provenance (baseline), then with PROV‑JSON generation — and writes a results table to `timing_overhead.csv` in the project root.
-
-**Output schema (`timing_overhead.csv`):**
-- `task_id`, `dataset_id`, `dataset_name`
-- `run_id_no_prov`, `seconds_no_prov`
-- `run_id_with_prov`, `seconds_with_prov`
-- `overhead_pct` = `(seconds_with_prov - seconds_no_prov) / seconds_no_prov * 100`
-
-**Interpreting results.** Small positive values mean a longer runtime with provenance; small negative values can occur due to normal wall‑clock variability (e.g., OS scheduling and filesystem caching) and do not imply a true speed‑up from provenance. Across typical CC18 workloads, overheads cluster near 0% and are usually within a few percent.
-
-**Examples**
-```bash
-# First 5 tasks, write per‑task paired timings
-python openml-to-prov.py --n-tasks 5 --measure-overhead
-
-# Baseline only (no provenance), single pass
-python openml-to-prov.py --n-tasks 5 --no-prov
-
-# Provenance enabled (default), single pass
-python openml-to-prov.py --n-tasks 5
-```
-
-**Quick analysis (Python)**
 ```python
-import pandas as pd
-df = pd.read_csv('timing_overhead.csv')
-print('n=', len(df))
-print('mean overhead % =', df['overhead_pct'].mean().round(2))
-print('median overhead % =', df['overhead_pct'].median().round(2))
-print('within ±2.5% =', (df['overhead_pct'].abs() <= 2.5).sum())
+from openml_to_prov import CorpusGenerator, CorpusConfig
+
+# Configure corpus generation
+config = CorpusConfig(
+    mode="large",           # light, scaled, large, or full
+    output_dir="prov_corpus",
+    n_folds=5,
+    pretty_print=True,      # Human-readable JSON
+    verbose=True
+)
+
+# Generate corpus
+generator = CorpusGenerator(config)
+stats = generator.generate()
+
+print(f"Generated {stats['total_runs']:,} runs")
+print(f"Total size: {stats['total_bytes'] / 1e6:.1f} MB")
 ```
 
-**Reproducibility tips.** For tighter measurements, consider: (i) closing background workloads; (ii) fixing CPU frequency/governor; (iii) pinning to a single NUMA/CPU socket; and (iv) repeating measurements to report medians.
+## Output Structure
 
-**Outputs** will be written to:
-- `prov_out/`
-- `preprov_out/`
-- `models_out/`
-- `predictions_out/`
-- `splits_out/`
-- `prov_dot_png/` (if rendering enabled)
-- `timing_overhead.csv` (when `--measure-overhead` is used)
+```
+prov_corpus/
+├── corpus_manifest.json          # Corpus metadata and statistics
+├── task_3/
+│   ├── RandomForest/
+│   │   ├── prov_<uuid>.json      # PROV document for config 0
+│   │   ├── prov_<uuid>.json      # PROV document for config 1
+│   │   └── ...                   # 12 configs total
+│   ├── GradientBoosting/
+│   │   └── ...
+│   └── ...                       # 12 classifiers total
+├── task_6/
+│   └── ...
+└── ...                           # 74-499 tasks depending on mode
+```
+
+## PROV Document Structure
+
+Each PROV-JSON file contains a complete provenance graph for one experiment run:
+
+### Entities
+- **Dataset**: OpenML dataset with metadata, checksums
+- **Task**: OpenML task definition
+- **Flow**: ML model/algorithm specification
+- **FlowParameters**: Hyperparameter configuration
+- **Environment**: Python version, platform, library versions
+- **Split**: CV fold train/test split indices
+- **Model**: Trained model artifact per fold
+- **Predictions**: Model predictions per fold
+- **Metrics**: Evaluation metrics per fold
+- **AggregateMetrics**: Cross-fold mean/std metrics
+
+### Activities
+- **Experiment**: Top-level experiment coordination
+- **Train**: Model training per fold
+- **Predict**: Model inference per fold
+- **Evaluate**: Metric computation per fold
+- **Aggregate**: Cross-fold aggregation
+
+### Relations
+- `used`: Activity consumed entity
+- `wasGeneratedBy`: Entity produced by activity
+- `wasAssociatedWith`: Activity performed by agent
+- `wasInformedBy`: Activity communication chain
+- `wasAttributedTo`: Entity attributed to agent
+- `wasDerivedFrom`: Entity derivation lineage
 
 ## Example
 
-Example provenance output (`openml_run_<uuid>.prov.json`):
+Example provenance output (`prov_<uuid>.json`):
 
 ```json
 {
   "prefix": {
     "prov": "http://www.w3.org/ns/prov#",
     "openml": "https://openml.org/def/",
-    "e": "urn:entity:"
+    "ml": "https://ml-schema.org/",
+    "e": "urn:entity:",
+    "a": "urn:activity:",
+    "ag": "urn:agent:"
   },
   "entity": {
     "e:dataset/11": {
-      "prov:label": "OpenML dataset 11 (balance-scale)",
+      "prov:label": "Dataset 11",
       "prov:type": "openml:Dataset",
-      "openml:data_id": 11
+      "openml:data_id": 11,
+      "ml:n_samples": 625,
+      "ml:n_features": 4
+    },
+    "e:metrics/abc123_fold1": {
+      "prov:label": "Metrics fold 1",
+      "prov:type": "openml:Metrics",
+      "openml:accuracy": 0.856
     }
   },
-  "activity": { ... },
-  "agent": { ... }
+  "activity": {
+    "a:train/abc123_fold1": {
+      "prov:label": "Train fold 1",
+      "prov:type": "openml:Train",
+      "prov:startTime": "2025-01-09T12:00:00Z",
+      "prov:endTime": "2025-01-09T12:00:03Z"
+    }
+  },
+  "agent": {
+    "ag:system/OpenML": {
+      "prov:type": "prov:SoftwareAgent",
+      "prov:label": "OpenML sklearn - RandomForest"
+    }
+  },
+  "used": [...],
+  "wasGeneratedBy": [...],
+  "wasAssociatedWith": [...],
+  "wasInformedBy": [...],
+  "wasDerivedFrom": [...]
 }
 ```
 
-Rendered graph example: *(Image not shown here; see `prov_dot_png/` for output)*
+## Package Structure
+
+```
+openml_to_prov/
+├── __init__.py       # Package exports
+├── __main__.py       # CLI entry point
+├── config.py         # CorpusConfig, task IDs (CC18, CC21, regression)
+├── generator.py      # CorpusGenerator class
+├── models.py         # Classifier/regressor configurations
+├── prov_builder.py   # W3C PROV document builder
+└── utils.py          # Utility functions (hashing, timestamps, metrics)
+```
+
+## Use Cases
+
+### Compression Research
+
+Generate corpora at multiple scales to validate provenance compression algorithms:
+
+```bash
+# Generate test corpus
+python -m openml_to_prov --mode light --output corpus_light
+
+# Generate validation corpus
+python -m openml_to_prov --mode large --output corpus_large
+
+# Measure compression ratio
+python your_compressor.py corpus_large/
+```
+
+### Reproducibility Studies
+
+Capture complete ML experiment provenance for reproducibility analysis:
+
+```python
+from openml_to_prov import CorpusGenerator, CorpusConfig
+
+config = CorpusConfig(mode="scaled")
+generator = CorpusGenerator(config)
+stats = generator.generate()
+
+# Analyze provenance structure
+import json
+with open("prov_corpus/task_3/RandomForest/prov_xxx.json") as f:
+    prov = json.load(f)
+    print(f"Entities: {len(prov['entity'])}")
+    print(f"Activities: {len(prov['activity'])}")
+```
 
 ## Citation
 
@@ -156,10 +289,10 @@ If you use this software, please cite:
 ```bibtex
 @software{jones_openml_to_prov_2025,
   author       = {Nicholas Jones},
-  title        = {openml-to-prov: Export OpenML runs to W3C PROV-JSON},
+  title        = {openml-to-prov: Generate W3C PROV corpora from OpenML benchmarks},
   year         = {2025},
   publisher    = {Zenodo},
-  version      = {1.0.0},
+  version      = {2.0.0},
   doi          = {10.5281/zenodo.17007366},
   url          = {https://doi.org/10.5281/zenodo.17007366}
 }
@@ -171,9 +304,8 @@ This project is licensed under the MIT License – see the [LICENSE](LICENSE) fi
 
 ## Acknowledgements
 
-- Built on [OpenML](https://www.openml.org/) and [scikit-learn](https://scikit-learn.org/).
+- Built on [OpenML](https://www.openml.org/) benchmark suites and [scikit-learn](https://scikit-learn.org/) model configurations.
 - Provenance representation via [W3C PROV](https://www.w3.org/TR/prov-dm/).
-- Graph rendering through the [`prov` Python library](https://pypi.org/project/prov/).
 - This work acknowledges the [OpenML](https://www.openml.org/) platform as described in:  
   Vanschoren, J., van Rijn, J. N., Bischl, B., & Torgo, L. (2017). *OpenML: networked science in machine learning.*  
   [arXiv:1708.03731](https://arxiv.org/abs/1708.03731).
