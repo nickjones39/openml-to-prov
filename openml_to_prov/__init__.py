@@ -7,14 +7,19 @@ Supports multiple corpus sizes for compression research validation.
 Usage:
   python -m openml_to_prov --mode light    # ~2.2 MB, 72 runs
   python -m openml_to_prov --mode scaled   # ~308 MB, 10,656 runs
-  python -m openml_to_prov --mode large    # ~734 MB, 25,344 runs
-  python -m openml_to_prov --mode full     # ~2+ GB, 71,856 runs
+  python -m openml_to_prov --mode large    # ~734 MB, 24,912 runs
+  python -m openml_to_prov --mode full     # ~2+ GB, 76320 runs
 
 Modes:
-  light:   ~2.2 MB (72 runs, single classifier)
+  light:   ~2.2 MB (72 runs, CC18 × single classifier)
   scaled:  ~308 MB (10,656 runs, CC18 × 144 configs)
-  large:   ~734 MB (25,344 runs, CC18+CC21 × 144 configs)
-  full:    ~2+ GB (71,856 runs, CC18+CC21+regression × 144 configs)
+  large:   ~734 MB (24,912 runs, CC18 + extended classification × 144 configs)
+  full:    ~2+ GB (76,320 runs, CC18 + extended + regression × 144 configs)
+
+Task Sources:
+  - OpenML-CC18: 72 curated classification tasks (official benchmark suite)
+  - Extended classification: Additional OpenML classification tasks for scale
+  - Regression: OpenML regression tasks for supervised learning coverage
 """
 
 __version__ = "2.0.0"

@@ -8,8 +8,8 @@ from typing import Dict, List, Tuple, Optional
 import numpy as np
 
 from .config import (
-    CorpusConfig, CC18_TASK_IDS, CC21_CORE_TASK_IDS, CC21_TASK_IDS,
-    REGRESSION_TASK_IDS, DATASET_TEMPLATES
+    CorpusConfig, CC18_TASK_IDS, EXTENDED_CLASSIFICATION_TASK_IDS, 
+    EXTENDED_CLASSIFICATION_FULL_TASK_IDS, REGRESSION_TASK_IDS, DATASET_TEMPLATES
 )
 from .models import get_original_config, get_classification_configs, get_regression_configs
 from .prov_builder import ProvDocumentBuilder
@@ -44,11 +44,11 @@ class CorpusGenerator:
             return [(t, "classification") for t in CC18_TASK_IDS]
         elif self.config.mode == "large":
             tasks = [(t, "classification") for t in CC18_TASK_IDS]
-            tasks += [(t, "classification") for t in CC21_CORE_TASK_IDS]
+            tasks += [(t, "classification") for t in EXTENDED_CLASSIFICATION_TASK_IDS]
             return tasks
         else:  # full
             tasks = [(t, "classification") for t in CC18_TASK_IDS]
-            tasks += [(t, "classification") for t in CC21_TASK_IDS]
+            tasks += [(t, "classification") for t in EXTENDED_CLASSIFICATION_FULL_TASK_IDS]
             tasks += [(t, "regression") for t in REGRESSION_TASK_IDS]
             return tasks
 
@@ -334,10 +334,10 @@ class CorpusGenerator:
             "mode": self.config.mode,
             "created": get_timestamp(),
             "stats": self.stats,
-            "suites": {
+            "task_sources": {
                 "CC18": len(CC18_TASK_IDS),
-                "CC21": len(CC21_CORE_TASK_IDS) if self.config.mode == "large" else (
-                    len(CC21_TASK_IDS) if self.config.mode == "full" else 0
+                "extended_classification": len(EXTENDED_CLASSIFICATION_TASK_IDS) if self.config.mode == "large" else (
+                    len(EXTENDED_CLASSIFICATION_FULL_TASK_IDS) if self.config.mode == "full" else 0
                 ),
                 "regression": len(REGRESSION_TASK_IDS) if self.config.mode == "full" else 0,
             }

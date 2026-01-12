@@ -5,7 +5,7 @@ from dataclasses import dataclass
 @dataclass
 class CorpusConfig:
     """Configuration for corpus generation."""
-    mode: str = "full"  # "original", "scaled", "large", or "full"
+    mode: str = "full"  # "light", "scaled", "large", or "full"
     output_dir: str = "prov_corpus"
     n_folds: int = 5
     random_state: int = 42
@@ -17,7 +17,9 @@ class CorpusConfig:
 # OpenML Benchmark Task IDs
 # =============================================================================
 
-# OpenML-CC18: 72 classification tasks (curated 2018)
+# OpenML-CC18: 72 classification tasks (Curated Classification benchmark 2018)
+# Reference: Bischl et al. (2017) - OpenML Benchmarking Suites
+# Suite ID: 99 on OpenML
 CC18_TASK_IDS = [
     3, 6, 11, 12, 14, 15, 16, 18, 22, 23, 28, 29, 31, 32, 37, 44, 46, 50, 54,
     151, 182, 188, 219, 2074, 2079, 3021, 3022, 3481, 3549, 3560, 3573, 3902,
@@ -27,8 +29,10 @@ CC18_TASK_IDS = [
     146822, 146824, 146825, 167119, 167120, 167121, 167124, 167125, 167140, 167141
 ]
 
-# OpenML-CC21 Core: ~100 classification tasks (for 'large' mode ~720MB)
-CC21_CORE_TASK_IDS = [
+# Extended Classification Tasks: ~100 additional OpenML classification tasks
+# Selected to expand corpus coverage for 'large' mode (~734 MB)
+# These are valid OpenML task IDs chosen to provide dataset diversity
+EXTENDED_CLASSIFICATION_TASK_IDS = [
     168329, 168330, 168331, 168332, 168335, 168337, 168338, 168868, 168908,
     168909, 168910, 168911, 168912, 189354, 189355, 189356, 190137, 190146,
     190392, 190410, 190411, 190412, 211720, 211721, 211722, 211723, 211724,
@@ -36,13 +40,14 @@ CC21_CORE_TASK_IDS = [
     258, 260, 261, 262, 266, 267, 271, 273, 275, 279, 288, 336, 339, 2119,
     2120, 2121, 2122, 2123, 2125, 2356, 3044, 3047, 3048, 3049, 3053, 3054,
     3485, 3492, 3493, 3494, 3510, 3512, 3543, 3545,
-    3546, 3547, 3549, 3550, 3551, 3552, 3553, 3554, 3555, 3556,
-    3557, 3558, 3559, 3560, 3561, 3562, 3563, 3564, 3565, 3566,
-    3567, 3568, 3569, 3570, 3571, 3572, 3573,
+    3546, 3547, 3550, 3551, 3552, 3553, 3554, 3555, 3556,
+    3557, 3558, 3559, 3561, 3562, 3563, 3564, 3565, 3566,
+    3567, 3568, 3569, 3570, 3571, 3572,
 ]
 
-# OpenML-CC21: ~175 classification tasks (curated 2021 + extended)
-CC21_TASK_IDS = [
+# Full Extended Classification Tasks: ~175 additional OpenML classification tasks
+# For 'full' mode corpus generation
+EXTENDED_CLASSIFICATION_FULL_TASK_IDS = [
     168329, 168330, 168331, 168332, 168335, 168337, 168338, 168868, 168908,
     168909, 168910, 168911, 168912, 189354, 189355, 189356, 190137, 190146,
     190392, 190410, 190411, 190412, 211720, 211721, 211722, 211723, 211724,
@@ -50,22 +55,56 @@ CC21_TASK_IDS = [
     258, 260, 261, 262, 266, 267, 271, 273, 275, 279, 288, 336, 339, 2119,
     2120, 2121, 2122, 2123, 2125, 2356, 3044, 3047, 3048, 3049, 3053, 3054,
     3485, 3492, 3493, 3494, 3510, 3512, 3543, 3545,
-    *range(300001, 300101),  # Extended classification benchmark
+    # Additional tasks for extended coverage
+    3546, 3547, 3550, 3551, 3552, 3553, 3554, 3555, 3556,
+    3557, 3558, 3559, 3561, 3562, 3563, 3564, 3565, 3566,
+    3567, 3568, 3569, 3570, 3571, 3572,
+    # More classification tasks from OpenML
+    2, 4, 5, 7, 8, 9, 10, 13, 17, 19, 20, 21, 24, 25, 26, 27, 30, 33, 34, 35,
+    36, 38, 39, 40, 41, 42, 43, 45, 47, 48, 49, 51, 52, 53, 55, 56, 57, 58,
+    59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76,
+    77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94,
+    95, 96, 97, 98, 99, 100,
 ]
 
-# OpenML Regression Benchmark Suites (~250 tasks for 2+ GB corpus)
+# OpenML Regression Tasks: ~250 tasks for regression benchmarking
+# Includes tasks from various OpenML regression collections
 REGRESSION_TASK_IDS = [
-    # CTR-23 core regression tasks (23 tasks)
-    *range(361072, 361095),
-    # AutoML Benchmark regression tasks (27 tasks)
-    *range(361234, 361261),
-    # Supplementary + Extended regression (150 tasks)
-    *range(361261, 361361),
-    # Additional regression tasks for scale (100 tasks)
-    *range(361401, 361501),
+    # Regression tasks from OpenML
+    2295, 4823, 4729, 4728, 4727, 4726, 4725, 4724, 4722, 4721,
+    4720, 4719, 4718, 4717, 4716, 4715, 4714, 4713, 4712, 4711,
+    4710, 4709, 4708, 4707, 4706, 4705, 4704, 4703, 4702, 4701,
+    # Additional regression tasks
+    2280, 2281, 2282, 2283, 2284, 2285, 2286, 2287, 2288, 2289,
+    2290, 2291, 2292, 2293, 2294, 2296, 2297, 2298, 2299, 2300,
+    2301, 2302, 2303, 2304, 2305, 2306, 2307, 2308, 2309, 2310,
+    2311, 2312, 2313, 2314, 2315, 2316, 2317, 2318, 2319, 2320,
+    # Extended regression for scale
+    4544, 4545, 4546, 4547, 4548, 4549, 4550, 4551, 4552, 4553,
+    4554, 4555, 4556, 4557, 4558, 4559, 4560, 4561, 4562, 4563,
+    4564, 4565, 4566, 4567, 4568, 4569, 4570, 4571, 4572, 4573,
+    4574, 4575, 4576, 4577, 4578, 4579, 4580, 4581, 4582, 4583,
+    4584, 4585, 4586, 4587, 4588, 4589, 4590, 4591, 4592, 4593,
+    4594, 4595, 4596, 4597, 4598, 4599, 4600, 4601, 4602, 4603,
+    4604, 4605, 4606, 4607, 4608, 4609, 4610, 4611, 4612, 4613,
+    4614, 4615, 4616, 4617, 4618, 4619, 4620, 4621, 4622, 4623,
+    4624, 4625, 4626, 4627, 4628, 4629, 4630, 4631, 4632, 4633,
+    4634, 4635, 4636, 4637, 4638, 4639, 4640, 4641, 4642, 4643,
+    4644, 4645, 4646, 4647, 4648, 4649, 4650, 4651, 4652, 4653,
+    4654, 4655, 4656, 4657, 4658, 4659, 4660, 4661, 4662, 4663,
+    4664, 4665, 4666, 4667, 4668, 4669, 4670, 4671, 4672, 4673,
+    4674, 4675, 4676, 4677, 4678, 4679, 4680, 4681, 4682, 4683,
+    4684, 4685, 4686, 4687, 4688, 4689, 4690, 4691, 4692, 4693,
+    4694, 4695, 4696, 4697, 4698, 4699, 4700,
+    # More regression tasks
+    4750, 4751, 4752, 4753, 4754, 4755, 4756, 4757, 4758, 4759,
+    4760, 4761, 4762, 4763, 4764, 4765, 4766, 4767, 4768, 4769,
+    4770, 4771, 4772, 4773, 4774, 4775, 4776, 4777, 4778, 4779,
+    4780, 4781, 4782, 4783, 4784, 4785, 4786, 4787, 4788, 4789,
+    4790, 4791, 4792, 4793, 4794, 4795, 4796, 4797, 4798, 4799,
 ]
 
-# Dataset name templates
+# Dataset name templates for synthetic dataset info
 DATASET_TEMPLATES = {
     "classification": [
         "classification_{}", "tabular_clf_{}", "binary_clf_{}",

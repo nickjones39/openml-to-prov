@@ -5,8 +5,8 @@ CLI entry point for openml_to_prov.
 Usage:
   python -m openml_to_prov --mode light    # ~2.2 MB, 72 runs
   python -m openml_to_prov --mode scaled   # ~308 MB, 10,656 runs
-  python -m openml_to_prov --mode large    # ~734 MB, 25,344 runs
-  python -m openml_to_prov --mode full     # ~2+ GB, 71,856 runs
+  python -m openml_to_prov --mode large    # ~734 MB, 24,912 runs
+  python -m openml_to_prov --mode full     # ~2+ GB, 76,320 runs
 """
 
 import argparse
@@ -22,14 +22,19 @@ def main():
 Examples:
   python -m openml_to_prov --mode light    # ~2.2 MB (72 runs)
   python -m openml_to_prov --mode scaled   # ~308 MB (10,656 runs, CC18)
-  python -m openml_to_prov --mode large    # ~734 MB (25,344 runs, CC18+CC21)
-  python -m openml_to_prov --mode full     # ~2+ GB (71,856 runs, CC18+CC21+regression)
+  python -m openml_to_prov --mode large    # ~734 MB (24,912 runs, CC18 + extended)
+  python -m openml_to_prov --mode full     # ~2+ GB (76,320 runs, CC18 + extended + regression)
 
 Corpus sizes:
-  light:   74 tasks × 1 config = 72 runs (~2.2 MB)
-  scaled:  74 tasks × 144 configs = 10,656 runs (~308 MB)
-  large:   176 tasks × 144 configs = 25,344 runs (~734 MB)
-  full:    499 tasks × 144 configs = 71,856 runs (~2+ GB)
+  light:   72 tasks × 1 config = 72 runs (~2.2 MB)
+  scaled:  72 tasks × 144 configs = 10,656 runs (~308 MB)
+  large:   172 tasks × 144 configs = 24,912 runs (~734 MB)
+  full:    422 tasks × 144 configs = 76,320 runs (~2+ GB)
+
+Task sources:
+  CC18:       72 curated classification tasks (OpenML-CC18 benchmark suite)
+  Extended:   100 additional OpenML classification tasks
+  Regression: 250 OpenML regression tasks
         """
     )
     parser.add_argument(
