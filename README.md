@@ -1,7 +1,7 @@
 # openml-to-prov
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17007366.svg)](https://doi.org/10.5281/zenodo.17007366)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18218060.svg)](https://doi.org/10.5281/zenodo.18218060)
 
 **Generate W3C PROV-JSON provenance corpora from OpenML benchmark tasks for reproducible ML provenance research.**
 
@@ -39,9 +39,9 @@ The pipeline captures:
 | Mode | Tasks | Configs | Runs | Size | Use Case |
 |------|-------|---------|------|------|----------|
 | `light` | 72 | 1 | 72 | ~2.2 MB | Quick testing, CI/CD |
-| `scaled` | 72 | 144 | 10,368 | ~308 MB | Medium-scale experiments |
-| `large` | 172 | 144 | 24,768 | ~734 MB | Large-scale validation |
-| `full` | 422 | 144 | 60,768 | ~2+ GB | Production benchmarking |
+| `scaled` | 72 | 144 | 10,656 | ~308 MB | Medium-scale experiments |
+| `large` | 172 | 144 | 24,912 | ~734 MB | Large-scale validation |
+| `full` | 422 | 144 | 76,320 | ~2+ GB | Production benchmarking |
 
 ### Task Sources
 
@@ -94,13 +94,13 @@ pip install -r requirements.txt
 # Generate light corpus (~2.2 MB, 72 runs)
 python -m openml_to_prov --mode light
 
-# Generate scaled corpus (~308 MB, 10,368 runs)
+# Generate scaled corpus (~308 MB, 10,656 runs)
 python -m openml_to_prov --mode scaled
 
-# Generate large corpus (~734 MB, 24,768 runs)
+# Generate large corpus (~734 MB, 24,912 runs)
 python -m openml_to_prov --mode large
 
-# Generate full corpus (~2+ GB, 60,768 runs)
+# Generate full corpus (~2+ GB, 76,320 runs)
 python -m openml_to_prov --mode full
 ```
 
