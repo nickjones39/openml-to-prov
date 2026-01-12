@@ -3,11 +3,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17007366.svg)](https://doi.org/10.5281/zenodo.17007366)
 
-**Generate W3C PROV-JSON provenance corpora from OpenML benchmark suites for reproducible ML provenance research.**
+**Generate W3C PROV-JSON provenance corpora from OpenML benchmark tasks for reproducible ML provenance research.**
 
 ## Overview
 
-`openml-to-prov` is a reproducible pipeline for generating [W3C PROV](https://www.w3.org/TR/prov-dm/) compliant JSON provenance graphs from [OpenML](https://www.openml.org/) benchmark suites (CC18, CC21, regression benchmarks). The tool captures datasets, flows, models, predictions, evaluation metrics, cross-validation splits, timing, and environment metadata.
+`openml-to-prov` is a reproducible pipeline for generating [W3C PROV](https://www.w3.org/TR/prov-dm/) compliant JSON provenance graphs from [OpenML](https://www.openml.org/) benchmark tasks. The tool is centred on the OpenML-CC18 curated classification benchmark, with extended task coverage for scalability studies.
 
 Designed for research in provenance-aware machine learning, reproducibility, and **provenance-based graph compression**, the tool supports multiple corpus sizes from ~2 MB to ~2+ GB, enabling validation of compression algorithms at scale.
 
@@ -23,7 +23,8 @@ The pipeline captures:
 ## Features
 
 - **Scalable corpora**: Four modes from ~2 MB to ~2+ GB for compression research
-- **Multi-suite support**: CC18, CC21, and regression benchmark tasks
+- **OpenML-CC18 core**: Built on the official curated classification benchmark suite
+- **Extended coverage**: Additional classification and regression tasks for scale
 - **Provenance fidelity**: Conforms to the W3C PROV data model
 - **Reproducibility**: Environment and parameter capture included
 - **Per-fold granularity**: Separate train/predict/evaluate chains for each CV fold
@@ -37,16 +38,16 @@ The pipeline captures:
 
 | Mode | Tasks | Configs | Runs | Size | Use Case |
 |------|-------|---------|------|------|----------|
-| `light` | 74 | 1 | 72 | ~2.2 MB | Quick testing, CI/CD |
-| `scaled` | 74 | 144 | 10,656 | ~308 MB | Medium-scale experiments |
-| `large` | 176 | 144 | 25,344 | ~734 MB | Large-scale validation |
-| `full` | 499 | 144 | 71,856 | ~2+ GB | Production benchmarking |
+| `light` | 72 | 1 | 72 | ~2.2 MB | Quick testing, CI/CD |
+| `scaled` | 72 | 144 | 10,368 | ~308 MB | Medium-scale experiments |
+| `large` | 172 | 144 | 24,768 | ~734 MB | Large-scale validation |
+| `full` | 422 | 144 | 60,768 | ~2+ GB | Production benchmarking |
 
 ### Task Sources
 
-- **CC18**: OpenML-CC18 benchmark suite (74 classification tasks)
-- **CC21**: OpenML-CC21 benchmark suite (102 additional classification tasks)
-- **Regression**: CTR-23 + AutoML benchmark regression tasks (250 tasks)
+- **CC18**: OpenML-CC18 benchmark suite — 72 curated classification tasks ([Suite ID 99](https://www.openml.org/search?type=benchmark&study_type=task&id=99))
+- **Extended classification**: Additional OpenML classification tasks selected for dataset diversity (~100–175 tasks)
+- **Regression**: OpenML regression tasks for supervised learning coverage (~250 tasks)
 
 ### Model Configurations
 
@@ -93,13 +94,13 @@ pip install -r requirements.txt
 # Generate light corpus (~2.2 MB, 72 runs)
 python -m openml_to_prov --mode light
 
-# Generate scaled corpus (~308 MB, 10,656 runs)
+# Generate scaled corpus (~308 MB, 10,368 runs)
 python -m openml_to_prov --mode scaled
 
-# Generate large corpus (~734 MB, 25,344 runs)
+# Generate large corpus (~734 MB, 24,768 runs)
 python -m openml_to_prov --mode large
 
-# Generate full corpus (~2+ GB, 71,856 runs)
+# Generate full corpus (~2+ GB, 60,768 runs)
 python -m openml_to_prov --mode full
 ```
 
@@ -149,7 +150,7 @@ prov_corpus/
 │   └── ...                       # 12 classifiers total
 ├── task_6/
 │   └── ...
-└── ...                           # 74-499 tasks depending on mode
+└── ...                           # 72-422 tasks depending on mode
 ```
 
 ## PROV Document Structure
@@ -239,7 +240,7 @@ Example provenance output (`prov_<uuid>.json`):
 openml_to_prov/
 ├── __init__.py       # Package exports
 ├── __main__.py       # CLI entry point
-├── config.py         # CorpusConfig, task IDs (CC18, CC21, regression)
+├── config.py         # CorpusConfig, task IDs (CC18, extended, regression)
 ├── generator.py      # CorpusGenerator class
 ├── models.py         # Classifier/regressor configurations
 ├── prov_builder.py   # W3C PROV document builder
@@ -300,11 +301,11 @@ If you use this software, please cite:
 
 ## License
 
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgements
 
-- Built on [OpenML](https://www.openml.org/) benchmark suites and [scikit-learn](https://scikit-learn.org/) model configurations.
+- Built on [OpenML](https://www.openml.org/) benchmark tasks and [scikit-learn](https://scikit-learn.org/) model configurations.
 - Provenance representation via [W3C PROV](https://www.w3.org/TR/prov-dm/).
 - This work acknowledges the [OpenML](https://www.openml.org/) platform as described in:  
   Vanschoren, J., van Rijn, J. N., Bischl, B., & Torgo, L. (2017). *OpenML: networked science in machine learning.*  
