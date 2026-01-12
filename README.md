@@ -294,8 +294,8 @@ If you use this software, please cite:
   year         = {2025},
   publisher    = {Zenodo},
   version      = {2.0.0},
-  doi          = {10.5281/zenodo.17007366},
-  url          = {https://doi.org/10.5281/zenodo.17007366}
+  doi          = {10.5281/zenodo.18218060},
+  url          = {https://doi.org/10.5281/zenodo.18218060}
 }
 ```
 
