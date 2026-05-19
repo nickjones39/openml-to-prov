@@ -4,9 +4,9 @@ CLI entry point for openml_to_prov.
 
 Usage:
   python -m openml_to_prov --mode light    # ~2.1 MB, 72 runs
-  python -m openml_to_prov --mode scaled   # ~296 MB, 10,224 runs
-  python -m openml_to_prov --mode large    # ~710 MB, 24,480 runs
-  python -m openml_to_prov --mode full     # ~2.2 GB, 75,888 runs
+  python -m openml_to_prov --mode scaled   # ~301 MB, 10,368 runs
+  python -m openml_to_prov --mode large    # ~714 MB, 24,624 runs
+  python -m openml_to_prov --mode full     # ~2.2 GB, 76,032 runs
 """
 
 import argparse
@@ -21,15 +21,15 @@ def main():
         epilog="""
 Examples:
   python -m openml_to_prov --mode light    # ~2.1 MB (72 runs)
-  python -m openml_to_prov --mode scaled   # ~296 MB (10,224 runs, CC18)
-  python -m openml_to_prov --mode large    # ~710 MB (24,480 runs, CC18 + extended)
-  python -m openml_to_prov --mode full     # ~2.2 GB (75,888 runs, CC18 + extended + regression)
+  python -m openml_to_prov --mode scaled   # ~301 MB (10,368 runs, CC18)
+  python -m openml_to_prov --mode large    # ~714 MB (24,624 runs, CC18 + extended)
+  python -m openml_to_prov --mode full     # ~2.2 GB (76,032 runs, CC18 + extended + regression)
 
 Corpus sizes:
   light:   72 tasks × 1 config = 72 runs (~2.1 MB)
-  scaled:  71 tasks × 144 configs = 10,224 runs (~296 MB)
-  large:   170 tasks × 144 configs = 24,480 runs (~710 MB)
-  full:    527 tasks × 144 configs = 75,888 runs (~2.2 GB)
+  scaled:  72 tasks × 144 configs = 10,368 runs (~301 MB)
+  large:   171 tasks × 144 configs = 24,624 runs (~714 MB)
+  full:    528 tasks × 144 configs = 76,032 runs (~2.2 GB)
 
 Task sources:
   CC18:       72 curated classification tasks (OpenML-CC18 suite 99)
@@ -81,7 +81,7 @@ Task sources:
     args = parser.parse_args()
 
     if args.real and args.mode != "light":
-        mode_runs = {"scaled": 10224, "large": 24480, "full": 75888}
+        mode_runs = {"scaled": 10368, "large": 24624, "full": 76032}
         # Measured baseline: light mode (72 runs) ~45 min on M-series MacBook Pro.
         # Linear extrapolation: ~37s per run before classifier-cost growth.
         sec_per_run = 37
