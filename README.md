@@ -38,16 +38,14 @@ The pipeline captures:
 
 | Mode | Tasks | Configs | Runs | Size | Use Case |
 |------|-------|---------|------|------|----------|
-| `light` | 71 (synthetic) / 72 (`--real`) | 1 | 71–72 | ~2.1 MB | Quick testing, CI/CD |
-| `scaled` | 71 | 144 | 10,224 | ~296 MB | Medium-scale experiments |
-| `large` | 170 | 144 | 24,480 | ~710 MB | Large-scale validation |
-| `full` | 527 | 144 | 75,888 | ~2.2 GB | Production benchmarking |
-
-> **Note on light mode task count**: synthetic mode uses a hardcoded fallback of 71 CC18 tasks. With `--real`, the live task list is fetched directly from OpenML suite 99 (CC18), which returns 72 tasks — the single difference is a task type unsupported by the hardcoded list but present in the official suite.
+| `light` | 72 | 1 | 72 | ~2.1 MB | Quick testing, CI/CD |
+| `scaled` | 72 | 144 | 10,368 | ~296 MB | Medium-scale experiments |
+| `large` | 171 | 144 | 24,624 | ~710 MB | Large-scale validation |
+| `full` | 528 | 144 | 76,032 | ~2.2 GB | Production benchmarking |
 
 ### Task Sources
 
-- **CC18**: OpenML-CC18 benchmark suite — 71 tasks from the hardcoded fallback list (synthetic mode), or 72 tasks fetched live from OpenML ([Suite ID 99](https://www.openml.org/search?type=benchmark&study_type=task&id=99)) when `--real` is used
+- **CC18**: 72 classification tasks from the OpenML-CC18 benchmark suite ([Suite ID 99](https://www.openml.org/search?type=benchmark&study_type=task&id=99)). The hardcoded list is verified against the live suite; with `--real`, task IDs are fetched directly from OpenML at runtime
 - **Extended classification**: 99 additional OpenML classification tasks for `large` mode; 179 additional tasks for `full` mode
 - **Regression**: 277 OpenML regression tasks for `full` mode supervised learning coverage
 
@@ -163,10 +161,10 @@ Estimated wall-clock per mode at `--real` (measured baseline: `light` = ~45 min 
 
 | Mode | Runs | Estimated time |
 |------|------|----------------|
-| `light` | 72 (live from OpenML suite 99) | ~45 min (measured) |
-| `scaled` | 10,224 | ~4–7 days |
-| `large` | 24,480 | ~10–17 days |
-| `full` | 75,888 | ~30–50 days |
+| `light` | 72 | ~45 min (measured) |
+| `scaled` | 10,368 | ~4–7 days |
+| `large` | 24,624 | ~10–17 days |
+| `full` | 76,032 | ~30–50 days |
 
 For scales beyond `light`, use `--max-tasks` to validate a representative subset rather than running the entire corpus.
 

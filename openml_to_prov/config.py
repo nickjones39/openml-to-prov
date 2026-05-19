@@ -18,16 +18,15 @@ class CorpusConfig:
 # OpenML Benchmark Task IDs
 # =============================================================================
 
-# OpenML-CC18: 71 classification tasks (Curated Classification benchmark 2018)
-# Hardcoded fallback list — the official suite has 72 tasks on OpenML, but a few
-# were dropped here because their task type is not supported by openml-python.
-# With --real, the live list is fetched directly from suite 99 instead.
+# OpenML-CC18: 72 classification tasks (Curated Classification benchmark 2018)
+# Hardcoded list verified against OpenML suite 99 (live fetch returns 72 tasks).
+# With --real, the live list is fetched directly from suite 99 at runtime.
 # Reference: Bischl et al. (2017) - OpenML Benchmarking Suites
 # Suite ID: 99 on OpenML
 CC18_TASK_IDS = [
-    3, 6, 11, 12, 14, 15, 16, 18, 22, 23, 28, 29, 31, 32, 37, 50, 54,
-    151, 188, 219, 2074, 2079, 3021, 3022, 3481, 3549, 3560, 3573, 3902,
-    3903, 3904, 3913, 3917, 3918, 9910, 9946, 9952, 9957, 9960, 9964, 9971,
+    3, 6, 11, 12, 14, 15, 16, 18, 22, 23, 28, 29, 31, 32, 37, 43, 45, 49, 53,
+    219, 2074, 2079, 3021, 3022, 3481, 3549, 3560, 3573, 3902,
+    3903, 3904, 3913, 3917, 3918, 7592, 9910, 9946, 9952, 9957, 9960, 9964, 9971,
     9976, 9977, 9978, 9981, 9985, 10093, 10101, 14952, 14954, 14965, 14969,
     14970, 125920, 125922, 146195, 146800, 146817, 146819, 146820, 146821,
     146822, 146824, 146825, 167119, 167120, 167121, 167124, 167125, 167140, 167141
@@ -50,7 +49,7 @@ EXTENDED_CLASSIFICATION_TASK_IDS = [
 ]
 
 # Full Extended Classification Tasks: 179 additional OpenML classification tasks
-# For 'full' mode corpus generation (combined with CC18 → 250 classification tasks)
+# For 'full' mode corpus generation (combined with CC18 → 251 classification tasks)
 EXTENDED_CLASSIFICATION_FULL_TASK_IDS = [
     168329, 168330, 168331, 168332, 168335, 168337, 168338, 168868, 168908,
     168909, 168910, 168911, 168912, 189354, 189355, 189356, 190137, 190146,
