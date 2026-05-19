@@ -137,13 +137,16 @@ python -m openml_to_prov --mode light --real              # Real OpenML + sklear
 By default the corpus is generated with synthetic per-fold metrics and timestamps so it can be produced quickly without any network calls. The `--real` flag switches to **actual OpenML execution**: each task is downloaded from OpenML, scikit-learn is trained with the configured hyperparameters using OpenML's official cross-validation splits, and the PROV graph records real accuracy/R² scores and real wall-clock timestamps.
 
 ```bash
-# Real execution for the 72-task CC18 light corpus (~5–15 min)
+# Real execution for the 72-task CC18 light corpus (~45 min)
 python -m openml_to_prov --mode light --real --output prov_light_real
 
 # Sample real runs from larger modes (use --max-tasks to limit scope)
 python -m openml_to_prov --mode scaled --real --max-tasks 5 --output prov_scaled_sample
 python -m openml_to_prov --mode full   --real --max-tasks 3 --output prov_full_sample
 ```
+
+> **Warning**
+> Running `--real` on anything other than `light` mode will take many hours to several days. The CLI prints a runtime estimate and prompts for confirmation before starting. Use `--max-tasks N` to validate a subset before committing to a full run. Pass `--skip-confirm` to bypass the prompt (for scripting / CI).
 
 **Notes on `--real` mode:**
 
@@ -154,14 +157,14 @@ python -m openml_to_prov --mode full   --real --max-tasks 3 --output prov_full_s
 - Transient network/server errors trigger automatic retries with exponential backoff.
 - The corpus manifest records `"real_execution": true` so consumers can distinguish real from synthetic runs.
 
-Estimated wall-clock per mode at `--real` (rough — depends on dataset size and hardware):
+Estimated wall-clock per mode at `--real` (measured baseline: `light` = ~45 min on an M-series MacBook Pro; larger modes also use heavier classifiers on bigger datasets so real time may exceed the linear estimate):
 
 | Mode | Runs | Estimated time |
 |------|------|----------------|
-| `light` | 72 | ~5–15 min |
-| `scaled` | 10,656 | ~8–24 hrs |
-| `large` | 24,912 | ~1–3 days |
-| `full` | 76,320 | ~3–10 days |
+| `light` | 72 | ~45 min (measured) |
+| `scaled` | 10,656 | ~4–7 days |
+| `large` | 24,912 | ~10–17 days |
+| `full` | 76,320 | ~30–50 days |
 
 For scales beyond `light`, use `--max-tasks` to validate a representative subset rather than running the entire corpus.
 

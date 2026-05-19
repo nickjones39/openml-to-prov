@@ -72,15 +72,39 @@ Task sources:
             "Works for all modes; combine with --max-tasks to limit scope for larger modes."
         ),
     )
+    parser.add_argument(
+        "--skip-confirm",
+        action="store_true",
+        help="Skip the runtime confirmation prompt shown for --real with non-light modes.",
+    )
 
     args = parser.parse_args()
 
     if args.real and args.mode != "light":
-        from .config import CC18_TASK_IDS, EXTENDED_CLASSIFICATION_TASK_IDS, REGRESSION_TASK_IDS
         mode_runs = {"scaled": 10656, "large": 24912, "full": 76320}
-        n = mode_runs.get(args.mode, "?")
-        print(f"NOTE: --real with --mode {args.mode} will execute {n:,} real sklearn runs. "
-              f"Use --max-tasks N to limit scope.")
+        # Measured baseline: light mode (72 runs) ~45 min on M-series MacBook Pro.
+        # Linear extrapolation: ~37s per run before classifier-cost growth.
+        sec_per_run = 37
+        n = mode_runs.get(args.mode, 0)
+        est_hours = n * sec_per_run / 3600
+        est_days = est_hours / 24
+        print("\n" + "=" * 70)
+        print(f"  WARNING: --real with --mode {args.mode}")
+        print("=" * 70)
+        print(f"  This will execute {n:,} real sklearn runs against OpenML.")
+        print(f"  Estimated wall-clock: ~{est_hours:.0f} hours (~{est_days:.1f} days)")
+        print(f"  Baseline: light mode (72 runs) took ~45 min on M-series MacBook Pro.")
+        print(f"  Larger modes also use heavier classifiers (SVM, MLP) on bigger")
+        print(f"  datasets, so real time may be significantly longer than the linear")
+        print(f"  estimate above.")
+        print()
+        print(f"  Strongly recommended: use --max-tasks N to validate a sample first.")
+        print("=" * 70)
+        if not args.skip_confirm:
+            response = input("\n  Continue anyway? [y/N]: ").strip().lower()
+            if response != "y":
+                print("  Aborted.")
+                return
 
     config = CorpusConfig(
         mode=args.mode,
