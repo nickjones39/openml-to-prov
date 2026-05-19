@@ -90,7 +90,18 @@ class OpenMLExecutor:
     """Fetches OpenML tasks and runs real sklearn cross-validation."""
 
     def __init__(self, cache_dir: Optional[str] = None, verbose: bool = True):
+        import os
         import openml
+        from pathlib import Path
+        from dotenv import load_dotenv
+
+        # Load .env from repo root (two levels up from this file)
+        load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+
+        api_key = os.environ.get("OPENML_API_KEY")
+        if api_key and api_key != "your_key_here":
+            openml.config.apikey = api_key
+
         if cache_dir:
             openml.config.cache_directory = cache_dir
         self._openml = openml

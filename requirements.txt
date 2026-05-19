@@ -3,6 +3,7 @@ scikit-learn>=1.0
 pandas>=1.5
 numpy>=1.23
 joblib>=1.2
+python-dotenv>=1.0
 
 # Optional for provenance graph rendering
 prov>=2.0
