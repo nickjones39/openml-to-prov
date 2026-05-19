@@ -38,16 +38,16 @@ The pipeline captures:
 
 | Mode | Tasks | Configs | Runs | Size | Use Case |
 |------|-------|---------|------|------|----------|
-| `light` | 72 | 1 | 72 | ~2.2 MB | Quick testing, CI/CD |
-| `scaled` | 72 | 144 | 10,656 | ~308 MB | Medium-scale experiments |
-| `large` | 172 | 144 | 24,912 | ~734 MB | Large-scale validation |
-| `full` | 422 | 144 | 76,320 | ~2+ GB | Production benchmarking |
+| `light` | 71 | 1 | 71 | ~2.1 MB | Quick testing, CI/CD |
+| `scaled` | 71 | 144 | 10,224 | ~296 MB | Medium-scale experiments |
+| `large` | 170 | 144 | 24,480 | ~710 MB | Large-scale validation |
+| `full` | 527 | 144 | 75,888 | ~2.2 GB | Production benchmarking |
 
 ### Task Sources
 
-- **CC18**: OpenML-CC18 benchmark suite — 72 curated classification tasks ([Suite ID 99](https://www.openml.org/search?type=benchmark&study_type=task&id=99))
-- **Extended classification**: Additional OpenML classification tasks selected for dataset diversity (~100–175 tasks)
-- **Regression**: OpenML regression tasks for supervised learning coverage (~250 tasks)
+- **CC18**: OpenML-CC18 benchmark suite — 71 validated classification tasks from the hardcoded list, or 72 fetched live from OpenML ([Suite ID 99](https://www.openml.org/search?type=benchmark&study_type=task&id=99)) when `--real` is used
+- **Extended classification**: 99 additional OpenML classification tasks for `large` mode; 179 additional tasks for `full` mode
+- **Regression**: 277 OpenML regression tasks for `full` mode supervised learning coverage
 
 ### Model Configurations
 
@@ -109,16 +109,16 @@ If no key is found you'll see a warning and requests may be throttled.
 ### Command Line
 
 ```bash
-# Generate light corpus (~2.2 MB, 72 runs)
+# Generate light corpus (~2.1 MB, 71 runs)
 python -m openml_to_prov --mode light
 
-# Generate scaled corpus (~308 MB, 10,656 runs)
+# Generate scaled corpus (~296 MB, 10,224 runs)
 python -m openml_to_prov --mode scaled
 
-# Generate large corpus (~734 MB, 24,912 runs)
+# Generate large corpus (~710 MB, 24,480 runs)
 python -m openml_to_prov --mode large
 
-# Generate full corpus (~2+ GB, 76,320 runs)
+# Generate full corpus (~2.2 GB, 75,888 runs)
 python -m openml_to_prov --mode full
 ```
 
@@ -137,7 +137,7 @@ python -m openml_to_prov --mode light --real              # Real OpenML + sklear
 By default the corpus is generated with synthetic per-fold metrics and timestamps so it can be produced quickly without any network calls. The `--real` flag switches to **actual OpenML execution**: each task is downloaded from OpenML, scikit-learn is trained with the configured hyperparameters using OpenML's official cross-validation splits, and the PROV graph records real accuracy/R² scores and real wall-clock timestamps.
 
 ```bash
-# Real execution for the 72-task CC18 light corpus (~45 min)
+# Real execution for the 71-task CC18 light corpus (~45 min)
 python -m openml_to_prov --mode light --real --output prov_light_real
 
 # Sample real runs from larger modes (use --max-tasks to limit scope)
@@ -161,10 +161,10 @@ Estimated wall-clock per mode at `--real` (measured baseline: `light` = ~45 min 
 
 | Mode | Runs | Estimated time |
 |------|------|----------------|
-| `light` | 72 | ~45 min (measured) |
-| `scaled` | 10,656 | ~4–7 days |
-| `large` | 24,912 | ~10–17 days |
-| `full` | 76,320 | ~30–50 days |
+| `light` | 71 | ~45 min (measured) |
+| `scaled` | 10,224 | ~4–7 days |
+| `large` | 24,480 | ~10–17 days |
+| `full` | 75,888 | ~30–50 days |
 
 For scales beyond `light`, use `--max-tasks` to validate a representative subset rather than running the entire corpus.
 

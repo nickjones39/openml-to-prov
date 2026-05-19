@@ -3,10 +3,10 @@
 CLI entry point for openml_to_prov.
 
 Usage:
-  python -m openml_to_prov --mode light    # ~2.2 MB, 72 runs
-  python -m openml_to_prov --mode scaled   # ~308 MB, 10,656 runs
-  python -m openml_to_prov --mode large    # ~734 MB, 24,912 runs
-  python -m openml_to_prov --mode full     # ~2+ GB, 76,320 runs
+  python -m openml_to_prov --mode light    # ~2.1 MB, 71 runs
+  python -m openml_to_prov --mode scaled   # ~296 MB, 10,224 runs
+  python -m openml_to_prov --mode large    # ~710 MB, 24,480 runs
+  python -m openml_to_prov --mode full     # ~2.2 GB, 75,888 runs
 """
 
 import argparse
@@ -20,21 +20,21 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python -m openml_to_prov --mode light    # ~2.2 MB (72 runs)
-  python -m openml_to_prov --mode scaled   # ~308 MB (10,656 runs, CC18)
-  python -m openml_to_prov --mode large    # ~734 MB (24,912 runs, CC18 + extended)
-  python -m openml_to_prov --mode full     # ~2+ GB (76,320 runs, CC18 + extended + regression)
+  python -m openml_to_prov --mode light    # ~2.1 MB (71 runs)
+  python -m openml_to_prov --mode scaled   # ~296 MB (10,224 runs, CC18)
+  python -m openml_to_prov --mode large    # ~710 MB (24,480 runs, CC18 + extended)
+  python -m openml_to_prov --mode full     # ~2.2 GB (75,888 runs, CC18 + extended + regression)
 
 Corpus sizes:
-  light:   72 tasks × 1 config = 72 runs (~2.2 MB)
-  scaled:  72 tasks × 144 configs = 10,656 runs (~308 MB)
-  large:   172 tasks × 144 configs = 24,912 runs (~734 MB)
-  full:    422 tasks × 144 configs = 76,320 runs (~2+ GB)
+  light:   71 tasks × 1 config = 71 runs (~2.1 MB)
+  scaled:  71 tasks × 144 configs = 10,224 runs (~296 MB)
+  large:   170 tasks × 144 configs = 24,480 runs (~710 MB)
+  full:    527 tasks × 144 configs = 75,888 runs (~2.2 GB)
 
 Task sources:
-  CC18:       72 curated classification tasks (OpenML-CC18 benchmark suite)
-  Extended:   100 additional OpenML classification tasks
-  Regression: 250 OpenML regression tasks
+  CC18:       71 curated classification tasks (OpenML-CC18 benchmark suite)
+  Extended:   99 (large) / 179 (full) additional OpenML classification tasks
+  Regression: 277 OpenML regression tasks (full mode only)
         """
     )
     parser.add_argument(
@@ -81,7 +81,7 @@ Task sources:
     args = parser.parse_args()
 
     if args.real and args.mode != "light":
-        mode_runs = {"scaled": 10656, "large": 24912, "full": 76320}
+        mode_runs = {"scaled": 10224, "large": 24480, "full": 75888}
         # Measured baseline: light mode (72 runs) ~45 min on M-series MacBook Pro.
         # Linear extrapolation: ~37s per run before classifier-cost growth.
         sec_per_run = 37

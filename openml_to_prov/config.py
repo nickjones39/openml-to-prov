@@ -18,7 +18,10 @@ class CorpusConfig:
 # OpenML Benchmark Task IDs
 # =============================================================================
 
-# OpenML-CC18: ~72 classification tasks (Curated Classification benchmark 2018)
+# OpenML-CC18: 71 classification tasks (Curated Classification benchmark 2018)
+# Hardcoded fallback list — the official suite has 72 tasks on OpenML, but a few
+# were dropped here because their task type is not supported by openml-python.
+# With --real, the live list is fetched directly from suite 99 instead.
 # Reference: Bischl et al. (2017) - OpenML Benchmarking Suites
 # Suite ID: 99 on OpenML
 CC18_TASK_IDS = [
@@ -30,8 +33,8 @@ CC18_TASK_IDS = [
     146822, 146824, 146825, 167119, 167120, 167121, 167124, 167125, 167140, 167141
 ]
 
-# Extended Classification Tasks: ~100 additional OpenML classification tasks
-# Selected to expand corpus coverage for 'large' mode (~734 MB)
+# Extended Classification Tasks: 99 additional OpenML classification tasks
+# Selected to expand corpus coverage for 'large' mode (~710 MB)
 # These are valid OpenML task IDs chosen to provide dataset diversity
 EXTENDED_CLASSIFICATION_TASK_IDS = [
     168329, 168330, 168331, 168332, 168335, 168337, 168338, 168868, 168908,
@@ -46,8 +49,8 @@ EXTENDED_CLASSIFICATION_TASK_IDS = [
     3567, 3568, 3569, 3570, 3571, 3572,
 ]
 
-# Full Extended Classification Tasks: ~175 additional OpenML classification tasks
-# For 'full' mode corpus generation
+# Full Extended Classification Tasks: 179 additional OpenML classification tasks
+# For 'full' mode corpus generation (combined with CC18 → 250 classification tasks)
 EXTENDED_CLASSIFICATION_FULL_TASK_IDS = [
     168329, 168330, 168331, 168332, 168335, 168337, 168338, 168868, 168908,
     168909, 168910, 168911, 168912, 189354, 189355, 189356, 190137, 190146,
@@ -68,7 +71,7 @@ EXTENDED_CLASSIFICATION_FULL_TASK_IDS = [
     95, 96, 97, 98, 99, 100,
 ]
 
-# OpenML Regression Tasks: ~250 tasks for regression benchmarking
+# OpenML Regression Tasks: 277 tasks for regression benchmarking
 # Includes tasks from various OpenML regression collections
 REGRESSION_TASK_IDS = [
     # Regression tasks from OpenML
