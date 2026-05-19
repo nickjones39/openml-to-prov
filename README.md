@@ -109,16 +109,16 @@ If no key is found you'll see a warning and requests may be throttled.
 ### Command Line
 
 ```bash
-# Generate light corpus (~2.1 MB, 71 runs)
+# Generate light corpus (~2.1 MB, 72 runs)
 python -m openml_to_prov --mode light
 
-# Generate scaled corpus (~296 MB, 10,224 runs)
+# Generate scaled corpus (~301 MB, 10,368 runs)
 python -m openml_to_prov --mode scaled
 
-# Generate large corpus (~710 MB, 24,480 runs)
+# Generate large corpus (~714 MB, 24,624 runs)
 python -m openml_to_prov --mode large
 
-# Generate full corpus (~2.2 GB, 75,888 runs)
+# Generate full corpus (~2.2 GB, 76,032 runs)
 python -m openml_to_prov --mode full
 ```
 
