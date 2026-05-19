@@ -115,6 +115,16 @@ class OpenMLExecutor:
         "regression": "Supervised Regression",
     }
 
+    def get_suite_task_ids(self, suite_id: int) -> Optional[List[int]]:
+        """Fetch live task IDs for an OpenML benchmark suite (e.g. 99 = CC18). Returns None on failure."""
+        try:
+            suite = self._openml.study.get_suite(suite_id)
+            return [int(t) for t in suite.tasks]
+        except Exception as exc:
+            if self.verbose:
+                print(f"  WARNING: could not fetch suite {suite_id} from OpenML: {exc}")
+            return None
+
     def _get_task_with_retry(self, task_id: int, retries: int = 5, delay: float = 10.0):
         """Fetch an OpenML task, retrying on transient network or server errors."""
         from openml.exceptions import OpenMLServerException

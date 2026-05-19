@@ -58,18 +58,29 @@ class CorpusGenerator:
             else None
         )
 
+    def _cc18_ids(self) -> List[int]:
+        """Return CC18 task IDs — live from OpenML suite 99 if executor is on, else hardcoded fallback."""
+        if self.executor is not None:
+            live = self.executor.get_suite_task_ids(99)
+            if live:
+                print(f"  Loaded {len(live)} CC18 task IDs from OpenML suite 99")
+                return live
+            print(f"  Falling back to hardcoded CC18 list ({len(CC18_TASK_IDS)} tasks)")
+        return CC18_TASK_IDS
+
     def get_tasks(self) -> List[Tuple[int, str]]:
         """Get task IDs with types based on mode."""
+        cc18 = self._cc18_ids()
         if self.config.mode == "light":
-            return [(t, "classification") for t in CC18_TASK_IDS]
+            return [(t, "classification") for t in cc18]
         elif self.config.mode == "scaled":
-            return [(t, "classification") for t in CC18_TASK_IDS]
+            return [(t, "classification") for t in cc18]
         elif self.config.mode == "large":
-            tasks = [(t, "classification") for t in CC18_TASK_IDS]
+            tasks = [(t, "classification") for t in cc18]
             tasks += [(t, "classification") for t in EXTENDED_CLASSIFICATION_TASK_IDS]
             return tasks
         else:  # full
-            tasks = [(t, "classification") for t in CC18_TASK_IDS]
+            tasks = [(t, "classification") for t in cc18]
             tasks += [(t, "classification") for t in EXTENDED_CLASSIFICATION_FULL_TASK_IDS]
             tasks += [(t, "regression") for t in REGRESSION_TASK_IDS]
             return tasks
