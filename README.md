@@ -1,7 +1,7 @@
 # openml-to-prov
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18218060.svg)](https://doi.org/10.5281/zenodo.18218060)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20281044.svg)](https://doi.org/10.5281/zenodo.20281044)
 
 **Generate W3C PROV-JSON provenance corpora from OpenML benchmark tasks for reproducible ML provenance research.**
 
@@ -349,9 +349,9 @@ If you use this software, please cite:
   title        = {openml-to-prov: Generate W3C PROV corpora from OpenML benchmarks},
   year         = {2025},
   publisher    = {Zenodo},
-  version      = {2.0.0},
-  doi          = {10.5281/zenodo.18218060},
-  url          = {https://doi.org/10.5281/zenodo.18218060}
+  version      = {1.2.2},
+  doi          = {10.5281/zenodo.20281044},
+  url          = {https://doi.org/10.5281/zenodo.20281044}
 }
 ```
 
