@@ -26,13 +26,14 @@ Examples:
   python -m openml_to_prov --mode full     # ~2.2 GB (75,888 runs, CC18 + extended + regression)
 
 Corpus sizes:
-  light:   71 tasks × 1 config = 71 runs (~2.1 MB)
+  light:   71 tasks × 1 config = 71 runs (~2.1 MB)  [72 tasks/runs with --real]
   scaled:  71 tasks × 144 configs = 10,224 runs (~296 MB)
   large:   170 tasks × 144 configs = 24,480 runs (~710 MB)
   full:    527 tasks × 144 configs = 75,888 runs (~2.2 GB)
 
 Task sources:
-  CC18:       71 curated classification tasks (OpenML-CC18 benchmark suite)
+  CC18:       71 curated classification tasks (hardcoded fallback)
+              72 tasks with --real (live fetch from OpenML suite 99)
   Extended:   99 (large) / 179 (full) additional OpenML classification tasks
   Regression: 277 OpenML regression tasks (full mode only)
         """

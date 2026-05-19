@@ -38,14 +38,16 @@ The pipeline captures:
 
 | Mode | Tasks | Configs | Runs | Size | Use Case |
 |------|-------|---------|------|------|----------|
-| `light` | 71 | 1 | 71 | ~2.1 MB | Quick testing, CI/CD |
+| `light` | 71 (synthetic) / 72 (`--real`) | 1 | 71–72 | ~2.1 MB | Quick testing, CI/CD |
 | `scaled` | 71 | 144 | 10,224 | ~296 MB | Medium-scale experiments |
 | `large` | 170 | 144 | 24,480 | ~710 MB | Large-scale validation |
 | `full` | 527 | 144 | 75,888 | ~2.2 GB | Production benchmarking |
 
+> **Note on light mode task count**: synthetic mode uses a hardcoded fallback of 71 CC18 tasks. With `--real`, the live task list is fetched directly from OpenML suite 99 (CC18), which returns 72 tasks — the single difference is a task type unsupported by the hardcoded list but present in the official suite.
+
 ### Task Sources
 
-- **CC18**: OpenML-CC18 benchmark suite — 71 validated classification tasks from the hardcoded list, or 72 fetched live from OpenML ([Suite ID 99](https://www.openml.org/search?type=benchmark&study_type=task&id=99)) when `--real` is used
+- **CC18**: OpenML-CC18 benchmark suite — 71 tasks from the hardcoded fallback list (synthetic mode), or 72 tasks fetched live from OpenML ([Suite ID 99](https://www.openml.org/search?type=benchmark&study_type=task&id=99)) when `--real` is used
 - **Extended classification**: 99 additional OpenML classification tasks for `large` mode; 179 additional tasks for `full` mode
 - **Regression**: 277 OpenML regression tasks for `full` mode supervised learning coverage
 
@@ -161,7 +163,7 @@ Estimated wall-clock per mode at `--real` (measured baseline: `light` = ~45 min 
 
 | Mode | Runs | Estimated time |
 |------|------|----------------|
-| `light` | 71 | ~45 min (measured) |
+| `light` | 72 (live from OpenML suite 99) | ~45 min (measured) |
 | `scaled` | 10,224 | ~4–7 days |
 | `large` | 24,480 | ~10–17 days |
 | `full` | 75,888 | ~30–50 days |
