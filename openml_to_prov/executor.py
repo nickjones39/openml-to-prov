@@ -94,9 +94,20 @@ class OpenMLExecutor:
         self._openml = openml
         self.verbose = verbose
 
+    SUPPORTED_TASK_TYPES = {
+        "classification": "Supervised Classification",
+        "regression": "Supervised Regression",
+    }
+
     def get_task_data(self, task_id: int, task_type: str) -> Tuple:
         """Return (task, X, y, dataset_meta_dict)."""
         task = self._openml.tasks.get_task(task_id)
+        expected = self.SUPPORTED_TASK_TYPES.get(task_type)
+        if task.task_type != expected:
+            raise ValueError(
+                f"Task {task_id} has unsupported type '{task.task_type}' "
+                f"(expected '{expected}')"
+            )
         dataset = task.get_dataset()
         X, y, _, _ = dataset.get_data(target=task.target_name, dataset_format="dataframe")
 

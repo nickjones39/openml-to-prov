@@ -349,15 +349,16 @@ class CorpusGenerator:
                 real_fold_results = None
                 if self.executor is not None:
                     try:
-                        if self.config.verbose:
-                            print(f"    [{model} cfg{cfg_idx}] running real OpenML execution...")
                         result = self.executor.execute(
                             task_id, model, cfg, task_type, self.config.n_folds
                         )
                         ds = result["dataset_meta"]
                         real_fold_results = result["fold_results"]
+                    except ValueError as exc:
+                        if self.config.verbose:
+                            print(f"    SKIP: {exc} — using synthetic data")
                     except Exception as exc:
-                        print(f"    WARNING: real execution failed ({exc}), falling back to synthetic")
+                        print(f"    WARNING: real execution failed unexpectedly ({exc}), falling back to synthetic")
                 if real_fold_results is not None:
                     self.stats["real_execution"] = True
                 prov = self.build_prov(task_id, ds, model, cfg, cfg_idx, task_type, real_fold_results)
