@@ -4,6 +4,8 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
+_RETRYABLE = (OSError, TimeoutError, ConnectionError)
+
 import numpy as np
 import pandas as pd
 
@@ -99,15 +101,42 @@ class OpenMLExecutor:
         "regression": "Supervised Regression",
     }
 
-    def get_task_data(self, task_id: int, task_type: str) -> Tuple:
-        """Return (task, X, y, dataset_meta_dict)."""
-        task = self._openml.tasks.get_task(task_id)
+    def _get_task_with_retry(self, task_id: int, retries: int = 3, delay: float = 5.0):
+        """Fetch an OpenML task, retrying on transient network errors."""
+        for attempt in range(retries):
+            try:
+                return self._openml.tasks.get_task(task_id)
+            except _RETRYABLE as exc:
+                if attempt == retries - 1:
+                    raise
+                if self.verbose:
+                    print(f"      network error fetching task {task_id} "
+                          f"(attempt {attempt+1}/{retries}): {exc} — retrying in {delay}s")
+                time.sleep(delay)
+            except Exception as exc:
+                # Check if it's a requests-level error (wrapped by openml)
+                if "requests" in type(exc).__module__ or "urllib" in type(exc).__module__:
+                    if attempt == retries - 1:
+                        raise
+                    if self.verbose:
+                        print(f"      network error fetching task {task_id} "
+                              f"(attempt {attempt+1}/{retries}): {exc} — retrying in {delay}s")
+                    time.sleep(delay)
+                else:
+                    raise
+
+    def validate_task_type(self, task_id: int, task_type: str) -> None:
+        """Raise ValueError if the OpenML task type is not supported. Cheap — no dataset download."""
+        task = self._get_task_with_retry(task_id)
         expected = self.SUPPORTED_TASK_TYPES.get(task_type)
         if task.task_type != expected:
             raise ValueError(
-                f"Task {task_id} has unsupported type '{task.task_type}' "
-                f"(expected '{expected}')"
+                f"unsupported type '{task.task_type}' (expected '{expected}')"
             )
+
+    def get_task_data(self, task_id: int, task_type: str) -> Tuple:
+        """Return (task, X, y, dataset_meta_dict)."""
+        task = self._get_task_with_retry(task_id)
         dataset = task.get_dataset()
         X, y, _, _ = dataset.get_data(target=task.target_name, dataset_format="dataframe")
 

@@ -342,21 +342,29 @@ class CorpusGenerator:
         task_dir.mkdir(exist_ok=True)
         stats = {"task_id": task_id, "runs": 0, "bytes": 0}
 
+        # Pre-check task type once before the config loop so we don't
+        # re-fetch OpenML metadata and repeat the skip message per config.
+        task_executor = self.executor
+        if task_executor is not None:
+            try:
+                task_executor.validate_task_type(task_id, task_type)
+            except ValueError as exc:
+                if self.config.verbose:
+                    print(f"    SKIP task {task_id}: {exc} — using synthetic data")
+                task_executor = None
+
         for model, model_cfgs in cfgs.items():
             model_dir = task_dir / model
             model_dir.mkdir(exist_ok=True)
             for cfg_idx, cfg in enumerate(model_cfgs):
                 real_fold_results = None
-                if self.executor is not None:
+                if task_executor is not None:
                     try:
-                        result = self.executor.execute(
+                        result = task_executor.execute(
                             task_id, model, cfg, task_type, self.config.n_folds
                         )
                         ds = result["dataset_meta"]
                         real_fold_results = result["fold_results"]
-                    except ValueError as exc:
-                        if self.config.verbose:
-                            print(f"    SKIP: {exc} — using synthetic data")
                     except Exception as exc:
                         print(f"    WARNING: real execution failed unexpectedly ({exc}), falling back to synthetic")
                 if real_fold_results is not None:
