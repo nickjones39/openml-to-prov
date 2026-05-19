@@ -101,6 +101,9 @@ class OpenMLExecutor:
         api_key = os.environ.get("OPENML_API_KEY")
         if api_key and api_key != "your_key_here":
             openml.config.apikey = api_key
+            print(f"  OpenML API key loaded (ends ...{api_key[-4:]})")
+        else:
+            print("  WARNING: No OpenML API key found — requests may be rate-limited")
 
         if cache_dir:
             openml.config.cache_directory = cache_dir
@@ -112,27 +115,41 @@ class OpenMLExecutor:
         "regression": "Supervised Regression",
     }
 
-    def _get_task_with_retry(self, task_id: int, retries: int = 3, delay: float = 5.0):
-        """Fetch an OpenML task, retrying on transient network errors."""
+    def _get_task_with_retry(self, task_id: int, retries: int = 5, delay: float = 10.0):
+        """Fetch an OpenML task, retrying on transient network or server errors."""
+        from openml.exceptions import OpenMLServerException
         for attempt in range(retries):
             try:
                 return self._openml.tasks.get_task(task_id)
+            except OpenMLServerException as exc:
+                # Code 151 can mean rate-limited as well as genuinely missing.
+                # Retry with backoff; only treat as permanent after all retries fail.
+                if attempt == retries - 1:
+                    raise ValueError(
+                        f"task {task_id} unavailable after {retries} attempts: {exc}"
+                    ) from exc
+                wait = delay * (2 ** attempt)
+                if self.verbose:
+                    print(f"      server error for task {task_id} "
+                          f"(attempt {attempt+1}/{retries}): {exc} — retrying in {wait:.0f}s")
+                time.sleep(wait)
             except _RETRYABLE as exc:
                 if attempt == retries - 1:
                     raise
+                wait = delay * (2 ** attempt)
                 if self.verbose:
                     print(f"      network error fetching task {task_id} "
-                          f"(attempt {attempt+1}/{retries}): {exc} — retrying in {delay}s")
-                time.sleep(delay)
+                          f"(attempt {attempt+1}/{retries}): {exc} — retrying in {wait:.0f}s")
+                time.sleep(wait)
             except Exception as exc:
-                # Check if it's a requests-level error (wrapped by openml)
                 if "requests" in type(exc).__module__ or "urllib" in type(exc).__module__:
                     if attempt == retries - 1:
                         raise
+                    wait = delay * (2 ** attempt)
                     if self.verbose:
                         print(f"      network error fetching task {task_id} "
-                              f"(attempt {attempt+1}/{retries}): {exc} — retrying in {delay}s")
-                    time.sleep(delay)
+                              f"(attempt {attempt+1}/{retries}): {exc} — retrying in {wait:.0f}s")
+                    time.sleep(wait)
                 else:
                     raise
 
