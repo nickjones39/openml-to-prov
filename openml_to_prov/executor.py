@@ -121,6 +121,10 @@ class OpenMLExecutor:
         for attempt in range(retries):
             try:
                 return self._openml.tasks.get_task(task_id)
+            except NotImplementedError as exc:
+                # openml-python raises this for task types it can't parse
+                # (e.g. Supervised Data Stream Classification). Treat as skip.
+                raise ValueError(f"task {task_id} type not supported by openml-python: {exc}") from exc
             except OpenMLServerException as exc:
                 # Code 151 can mean rate-limited as well as genuinely missing.
                 # Retry with backoff; only treat as permanent after all retries fail.
