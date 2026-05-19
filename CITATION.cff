@@ -5,6 +5,6 @@ authors:
   - family-names: "Jones"
     given-names: "Nicholas"
 license: MIT
-version: "1.0.0"
-doi: 10.5281/zenodo.17007366
+version: "1.2.2"
+doi: 10.5281/zenodo.20281044
 url: "https://github.com/nickjones39/openml-to-prov"
