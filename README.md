@@ -39,9 +39,9 @@ The pipeline captures:
 | Mode | Tasks | Configs | Runs | Size | Use Case |
 |------|-------|---------|------|------|----------|
 | `light` | 72 | 1 | 72 | ~2.1 MB | Quick testing, CI/CD |
-| `scaled` | 72 | 144 | 10,368 | ~296 MB | Medium-scale experiments |
-| `large` | 171 | 144 | 24,624 | ~710 MB | Large-scale validation |
-| `full` | 528 | 144 | 76,032 | ~2.2 GB | Production benchmarking |
+| `scaled` | 71 | 144 | 10,224 | ~296 MB | Medium-scale experiments |
+| `large` | 170 | 144 | 24,480 | ~710 MB | Large-scale validation |
+| `full` | 527 | 144 | 75,888 | ~2.2 GB | Production benchmarking |
 
 ### Task Sources
 
@@ -162,9 +162,9 @@ Estimated wall-clock per mode at `--real` (measured baseline: `light` = ~45 min 
 | Mode | Runs | Estimated time |
 |------|------|----------------|
 | `light` | 72 | ~45 min (measured) |
-| `scaled` | 10,368 | ~4–7 days |
-| `large` | 24,624 | ~10–17 days |
-| `full` | 76,032 | ~30–50 days |
+| `scaled` | 10,224 | ~4–7 days |
+| `large` | 24,480 | ~10–17 days |
+| `full` | 75,888 | ~30–50 days |
 
 For scales beyond `light`, use `--max-tasks` to validate a representative subset rather than running the entire corpus.
 
