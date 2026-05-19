@@ -64,14 +64,30 @@ Task sources:
         action="store_true",
         help="Suppress verbose output"
     )
+    parser.add_argument(
+        "--real",
+        action="store_true",
+        help=(
+            "Run real OpenML + sklearn execution (downloads datasets, trains classifiers). "
+            "Works for all modes; combine with --max-tasks to limit scope for larger modes."
+        ),
+    )
 
     args = parser.parse_args()
+
+    if args.real and args.mode != "light":
+        from .config import CC18_TASK_IDS, EXTENDED_CLASSIFICATION_TASK_IDS, REGRESSION_TASK_IDS
+        mode_runs = {"scaled": 10656, "large": 24912, "full": 76320}
+        n = mode_runs.get(args.mode, "?")
+        print(f"NOTE: --real with --mode {args.mode} will execute {n:,} real sklearn runs. "
+              f"Use --max-tasks N to limit scope.")
 
     config = CorpusConfig(
         mode=args.mode,
         output_dir=args.output,
         verbose=not args.quiet,
         pretty_print=not args.compact,
+        use_real_execution=args.real,
     )
 
     generator = CorpusGenerator(config)

@@ -11,6 +11,7 @@ class CorpusConfig:
     random_state: int = 42
     verbose: bool = True
     pretty_print: bool = True
+    use_real_execution: bool = False  # light mode only: run actual sklearn + OpenML
 
 
 # =============================================================================
