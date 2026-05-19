@@ -77,14 +77,32 @@ pip install -r requirements.txt
 
 **Dependencies**:
 - `numpy`
-
-**Optional** (for original OpenML integration):
-- `openml`
-- `scikit-learn`
-- `pandas`
+- `openml` (required for `--real` mode)
+- `scikit-learn` (required for `--real` mode)
+- `pandas` (required for `--real` mode)
+- `python-dotenv` (loads OpenML API key from `.env`)
 - `joblib`
-- `prov` (for rendering)
-- `graphviz` (for rendering)
+
+**Optional** (for provenance graph rendering):
+- `prov`
+- `graphviz`
+
+### OpenML API Key (for `--real` mode)
+
+Real execution against the OpenML API requires an API key to avoid rate limiting. Get one free at [openml.org](https://www.openml.org/) → profile → API key, then create a `.env` file in the repo root:
+
+```bash
+# .env (never commit this file — already in .gitignore)
+OPENML_API_KEY=your_openml_api_key_here
+```
+
+The key is loaded automatically whenever `--real` is used. At startup you should see:
+
+```
+OpenML API key loaded (ends ...XXXX)
+```
+
+If no key is found you'll see a warning and requests may be throttled.
 
 ## Usage
 
@@ -111,7 +129,41 @@ python -m openml_to_prov --mode full --output my_corpus   # Custom output direct
 python -m openml_to_prov --mode full --compact            # Minified JSON (smaller files)
 python -m openml_to_prov --mode full --quiet              # Suppress progress output
 python -m openml_to_prov --mode full --max-tasks 10       # Limit tasks (for testing)
+python -m openml_to_prov --mode light --real              # Real OpenML + sklearn execution
 ```
+
+### Real Execution Mode (`--real`)
+
+By default the corpus is generated with synthetic per-fold metrics and timestamps so it can be produced quickly without any network calls. The `--real` flag switches to **actual OpenML execution**: each task is downloaded from OpenML, scikit-learn is trained with the configured hyperparameters using OpenML's official cross-validation splits, and the PROV graph records real accuracy/R² scores and real wall-clock timestamps.
+
+```bash
+# Real execution for the 72-task CC18 light corpus (~5–15 min)
+python -m openml_to_prov --mode light --real --output prov_light_real
+
+# Sample real runs from larger modes (use --max-tasks to limit scope)
+python -m openml_to_prov --mode scaled --real --max-tasks 5 --output prov_scaled_sample
+python -m openml_to_prov --mode full   --real --max-tasks 3 --output prov_full_sample
+```
+
+**Notes on `--real` mode:**
+
+- Requires an OpenML API key in `.env` (see [Installation](#installation)).
+- Fetches the live CC18 task list from OpenML suite 99 at startup, so the corpus always matches the official suite.
+- Supports both classification (accuracy) and regression (R²) tasks.
+- Tasks that fail (unsupported type, server unavailable) are skipped gracefully and that run falls back to synthetic data.
+- Transient network/server errors trigger automatic retries with exponential backoff.
+- The corpus manifest records `"real_execution": true` so consumers can distinguish real from synthetic runs.
+
+Estimated wall-clock per mode at `--real` (rough — depends on dataset size and hardware):
+
+| Mode | Runs | Estimated time |
+|------|------|----------------|
+| `light` | 72 | ~5–15 min |
+| `scaled` | 10,656 | ~8–24 hrs |
+| `large` | 24,912 | ~1–3 days |
+| `full` | 76,320 | ~3–10 days |
+
+For scales beyond `light`, use `--max-tasks` to validate a representative subset rather than running the entire corpus.
 
 ### Programmatic API
 
@@ -241,6 +293,7 @@ openml_to_prov/
 ├── __init__.py       # Package exports
 ├── __main__.py       # CLI entry point
 ├── config.py         # CorpusConfig, task IDs (CC18, extended, regression)
+├── executor.py       # Real OpenML + sklearn execution engine (--real mode)
 ├── generator.py      # CorpusGenerator class
 ├── models.py         # Classifier/regressor configurations
 ├── prov_builder.py   # W3C PROV document builder
