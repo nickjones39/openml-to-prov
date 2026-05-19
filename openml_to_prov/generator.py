@@ -3,7 +3,7 @@
 import json
 import random
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 
 import numpy as np
 
@@ -17,6 +17,7 @@ from .utils import (
     generate_run_id, compute_sha256, get_timestamp,
     get_environment_info, generate_synthetic_metric
 )
+from .executor import OpenMLExecutor
 
 
 class CorpusGenerator:
@@ -32,9 +33,30 @@ class CorpusGenerator:
             "tasks_processed": 0,
             "classification_tasks": 0,
             "regression_tasks": 0,
+            "real_execution": False,
+            "graph_structure": {
+                "nodes_per_graph": {"min": float("inf"), "max": 0, "total": 0},
+                "edges_per_graph": {"min": float("inf"), "max": 0, "total": 0},
+                "entities_per_graph": {"min": float("inf"), "max": 0, "total": 0},
+                "activities_per_graph": {"min": float("inf"), "max": 0, "total": 0},
+                "agents_per_graph": {"min": float("inf"), "max": 0, "total": 0},
+                "edge_breakdown": {
+                    "used": 0,
+                    "wasGeneratedBy": 0,
+                    "wasAssociatedWith": 0,
+                    "wasInformedBy": 0,
+                    "wasAttributedTo": 0,
+                    "wasDerivedFrom": 0,
+                },
+            },
         }
         self.output_dir = Path(config.output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.executor = (
+            OpenMLExecutor(verbose=config.verbose)
+            if config.use_real_execution
+            else None
+        )
 
     def get_tasks(self) -> List[Tuple[int, str]]:
         """Get task IDs with types based on mode."""
@@ -75,8 +97,9 @@ class CorpusGenerator:
         }
 
     def build_prov(
-        self, task_id: int, ds: Dict, model: str, 
-        cfg: Dict, cfg_idx: int, task_type: str
+        self, task_id: int, ds: Dict, model: str,
+        cfg: Dict, cfg_idx: int, task_type: str,
+        real_fold_results: Optional[List[Dict]] = None,
     ) -> ProvDocumentBuilder:
         """Build a PROV document for a single run."""
         b = ProvDocumentBuilder()
@@ -149,14 +172,36 @@ class CorpusGenerator:
 
         # Per-fold provenance
         fold_metrics, scores = [], []
-        train_sz = int(ds['n_samples'] * 0.8)
-        test_sz = ds['n_samples'] - train_sz
+        default_train_sz = int(ds['n_samples'] * 0.8)
+        default_test_sz = ds['n_samples'] - default_train_sz
 
         for f in range(self.config.n_folds):
             fn = f + 1
             fs = f"{run_id}_fold{fn}"
             fo = f * 10
-            score = generate_synthetic_metric(model, cfg_idx, task_id, f, task_type)
+
+            if real_fold_results is not None:
+                rd = real_fold_results[f]
+                score = rd["score"]
+                train_sz = rd["train_size"]
+                test_sz = rd["test_size"]
+                train_start = rd["train_start"]
+                train_end = rd["train_end"]
+                pred_start = rd["pred_start"]
+                pred_end = rd["pred_end"]
+                eval_start = rd["eval_start"]
+                eval_end = rd["eval_end"]
+            else:
+                score = generate_synthetic_metric(model, cfg_idx, task_id, f, task_type)
+                train_sz = default_train_sz
+                test_sz = default_test_sz
+                train_start = get_timestamp(fo)
+                train_end = get_timestamp(fo + 3)
+                pred_start = get_timestamp(fo + 4)
+                pred_end = get_timestamp(fo + 5)
+                eval_start = get_timestamp(fo + 6)
+                eval_end = get_timestamp(fo + 7)
+
             scores.append(score)
 
             # Split entity
@@ -174,8 +219,8 @@ class CorpusGenerator:
             b.add_activity(train, {
                 "prov:label": f"Train fold {fn}",
                 "prov:type": "openml:Train",
-                "prov:startTime": get_timestamp(fo),
-                "prov:endTime": get_timestamp(fo + 3)
+                "prov:startTime": train_start,
+                "prov:endTime": train_end,
             })
             b.add_association(train, agent)
             for ent, role in [(ds_ent, "data"), (split, "split"), (flow_ent, "flow"),
@@ -199,8 +244,8 @@ class CorpusGenerator:
             b.add_activity(pred_act, {
                 "prov:label": f"Predict fold {fn}",
                 "prov:type": "openml:Predict",
-                "prov:startTime": get_timestamp(fo + 4),
-                "prov:endTime": get_timestamp(fo + 5)
+                "prov:startTime": pred_start,
+                "prov:endTime": pred_end,
             })
             b.add_association(pred_act, agent)
             for ent, role in [(mdl, "model"), (ds_ent, "data"), (split, "split")]:
@@ -222,8 +267,8 @@ class CorpusGenerator:
             b.add_activity(eval_act, {
                 "prov:label": f"Evaluate fold {fn}",
                 "prov:type": "openml:Evaluate",
-                "prov:startTime": get_timestamp(fo + 6),
-                "prov:endTime": get_timestamp(fo + 7)
+                "prov:startTime": eval_start,
+                "prov:endTime": eval_end,
             })
             b.add_association(eval_act, agent)
             b.add_used(eval_act, preds, "predictions")
@@ -268,6 +313,27 @@ class CorpusGenerator:
 
         return b
 
+    def _update_graph_structure_stats(self, gs: Dict):
+        """Accumulate per-run node/edge counts into running min/max/total."""
+        gs_out = self.stats["graph_structure"]
+        for key, field in [
+            ("nodes", "nodes_per_graph"),
+            ("edges", "edges_per_graph"),
+            ("entities", "entities_per_graph"),
+            ("activities", "activities_per_graph"),
+            ("agents", "agents_per_graph"),
+        ]:
+            bucket = gs_out[field]
+            v = gs[key]
+            if v < bucket["min"]:
+                bucket["min"] = v
+            if v > bucket["max"]:
+                bucket["max"] = v
+            bucket["total"] += v
+        for rel in ["used", "wasGeneratedBy", "wasAssociatedWith",
+                    "wasInformedBy", "wasAttributedTo", "wasDerivedFrom"]:
+            gs_out["edge_breakdown"][rel] += gs[rel]
+
     def process_task(self, task_id: int, task_type: str, idx: int, total: int) -> Dict:
         """Process a single task with all model configurations."""
         ds = self.generate_dataset_info(task_id, task_type)
@@ -280,7 +346,22 @@ class CorpusGenerator:
             model_dir = task_dir / model
             model_dir.mkdir(exist_ok=True)
             for cfg_idx, cfg in enumerate(model_cfgs):
-                prov = self.build_prov(task_id, ds, model, cfg, cfg_idx, task_type)
+                real_fold_results = None
+                if self.executor is not None:
+                    try:
+                        if self.config.verbose:
+                            print(f"    [{model} cfg{cfg_idx}] running real OpenML execution...")
+                        result = self.executor.execute(
+                            task_id, model, cfg, task_type, self.config.n_folds
+                        )
+                        ds = result["dataset_meta"]
+                        real_fold_results = result["fold_results"]
+                    except Exception as exc:
+                        print(f"    WARNING: real execution failed ({exc}), falling back to synthetic")
+                if real_fold_results is not None:
+                    self.stats["real_execution"] = True
+                prov = self.build_prov(task_id, ds, model, cfg, cfg_idx, task_type, real_fold_results)
+                gs = prov.graph_stats()
                 prov_json = prov.to_json(self.config.pretty_print)
                 (model_dir / f"prov_{generate_run_id()}.json").write_text(prov_json)
                 sz = len(prov_json.encode())
@@ -289,6 +370,7 @@ class CorpusGenerator:
                 self.stats["total_bytes"] += sz
                 stats["runs"] += 1
                 stats["bytes"] += sz
+                self._update_graph_structure_stats(gs)
 
         self.stats["tasks_processed"] += 1
         if task_type == "classification":
@@ -327,6 +409,17 @@ class CorpusGenerator:
         for i, (tid, ttype) in enumerate(tasks):
             self.process_task(tid, ttype, i, len(tasks))
 
+        # Finalise graph structure averages
+        n = self.stats["total_runs"]
+        if n > 0:
+            gs = self.stats["graph_structure"]
+            for field in ["nodes_per_graph", "edges_per_graph", "entities_per_graph",
+                          "activities_per_graph", "agents_per_graph"]:
+                bucket = gs[field]
+                bucket["avg"] = round(bucket["total"] / n, 2)
+                if bucket["min"] == float("inf"):
+                    bucket["min"] = 0
+
         # Save manifest
         manifest = {
             "corpus_name": f"OpenML PROV Corpus ({self.config.mode})",
@@ -345,9 +438,30 @@ class CorpusGenerator:
         (self.output_dir / "corpus_manifest.json").write_text(json.dumps(manifest, indent=2))
 
         gb = self.stats["total_bytes"] / (1024**3)
+        gs = self.stats["graph_structure"]
+        nodes = gs["nodes_per_graph"]
+        edges = gs["edges_per_graph"]
+        ents = gs["entities_per_graph"]
+        acts = gs["activities_per_graph"]
+        agts = gs["agents_per_graph"]
         print(f"\n{'='*70}\nCOMPLETE\n{'='*70}")
         print(f"Classification: {self.stats['classification_tasks']} | "
               f"Regression: {self.stats['regression_tasks']}")
         print(f"Total runs:     {self.stats['total_runs']:,}")
         print(f"Total size:     {self.stats['total_bytes']/(1024**2):.1f} MB ({gb:.2f} GB)")
+        print(f"\nGraph structure (per run):")
+        print(f"  Nodes:      avg={nodes.get('avg', 'n/a')}  "
+              f"min={nodes['min']}  max={nodes['max']}")
+        print(f"  Edges:      avg={edges.get('avg', 'n/a')}  "
+              f"min={edges['min']}  max={edges['max']}")
+        print(f"  Entities:   avg={ents.get('avg', 'n/a')}  "
+              f"min={ents['min']}  max={ents['max']}")
+        print(f"  Activities: avg={acts.get('avg', 'n/a')}  "
+              f"min={acts['min']}  max={acts['max']}")
+        print(f"  Agents:     avg={agts.get('avg', 'n/a')}  "
+              f"min={agts['min']}  max={agts['max']}")
+        eb = gs["edge_breakdown"]
+        print(f"  Edge breakdown (totals across all runs):")
+        for rel, count in eb.items():
+            print(f"    {rel}: {count:,}")
         return self.stats

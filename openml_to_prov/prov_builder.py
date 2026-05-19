@@ -69,6 +69,29 @@ class ProvDocumentBuilder:
         """Add a 'wasDerivedFrom' relation."""
         self.doc["wasDerivedFrom"].append({"generatedEntity": generated, "usedEntity": used})
 
+    def graph_stats(self) -> Dict[str, int]:
+        """Return node and edge counts for this document."""
+        n_entities = len(self.doc["entity"])
+        n_activities = len(self.doc["activity"])
+        n_agents = len(self.doc["agent"])
+        edge_relations = [
+            "used", "wasGeneratedBy", "wasAssociatedWith",
+            "wasInformedBy", "wasAttributedTo", "wasDerivedFrom",
+        ]
+        return {
+            "nodes": n_entities + n_activities + n_agents,
+            "entities": n_entities,
+            "activities": n_activities,
+            "agents": n_agents,
+            "edges": sum(len(self.doc[r]) for r in edge_relations),
+            "used": len(self.doc["used"]),
+            "wasGeneratedBy": len(self.doc["wasGeneratedBy"]),
+            "wasAssociatedWith": len(self.doc["wasAssociatedWith"]),
+            "wasInformedBy": len(self.doc["wasInformedBy"]),
+            "wasAttributedTo": len(self.doc["wasAttributedTo"]),
+            "wasDerivedFrom": len(self.doc["wasDerivedFrom"]),
+        }
+
     def to_json(self, pretty: bool = True) -> str:
         """Serialize document to JSON string."""
         if pretty:
