@@ -9,7 +9,7 @@
 
 `openml-to-prov` is a reproducible pipeline for generating [W3C PROV](https://www.w3.org/TR/prov-dm/) compliant JSON provenance graphs from [OpenML](https://www.openml.org/) benchmark tasks. The tool is centred on the OpenML-CC18 curated classification benchmark, with extended task coverage for scalability studies.
 
-Designed for research in provenance-aware machine learning, reproducibility, and **provenance-based graph compression**, the tool supports multiple corpus sizes from ~2 MB to ~2+ GB, enabling validation of compression algorithms at scale.
+Designed for research in provenance-aware machine learning, reproducibility, and **provenance-based graph compression**, the tool supports multiple corpus sizes from ~2.3 MB to ~2.7+ GB, enabling validation of compression algorithms at scale.
 
 The pipeline captures:
 - Datasets (metadata, targets, versions)
@@ -22,7 +22,7 @@ The pipeline captures:
 
 ## Features
 
-- **Scalable corpora**: Four modes from ~2 MB to ~2+ GB for compression research
+- **Scalable corpora**: Four modes from ~2.3 MB to ~2.7+ GB for compression research
 - **OpenML-CC18 core**: Built on the official curated classification benchmark suite
 - **Extended coverage**: Additional classification and regression tasks for scale
 - **Provenance fidelity**: Conforms to the W3C PROV data model
@@ -38,10 +38,10 @@ The pipeline captures:
 
 | Mode | Tasks | Configs | Runs | Size | Use Case |
 |------|-------|---------|------|------|----------|
-| `light` | 72 | 1 | 72 | ~2.1 MB | Quick testing, CI/CD |
-| `scaled` | 72 | 144 | 10,368 | ~301 MB | Medium-scale experiments |
-| `large` | 171 | 144 | 24,624 | ~714 MB | Large-scale validation |
-| `full` | 528 | 144 | 76,032 | ~2.2 GB | Production benchmarking |
+| `light` | 72 | 1 | 72 | ~2.3 MB | Quick testing, CI/CD |
+| `scaled` | 72 | 144 | 10,368 | ~325.2 MB | Medium-scale experiments |
+| `large` | 171 | 144 | 24,624 | ~772 MB | Large-scale validation |
+| `full` | 528 | 144 | 76,032 | ~2.7 GB | Production benchmarking |
 
 ### Task Sources
 
@@ -109,16 +109,16 @@ If no key is found you'll see a warning and requests may be throttled.
 ### Command Line
 
 ```bash
-# Generate light corpus (~2.1 MB, 72 runs)
+# Generate light corpus (~2.3 MB, 72 runs)
 python -m openml_to_prov --mode light
 
-# Generate scaled corpus (~301 MB, 10,368 runs)
+# Generate scaled corpus (~325.2 MB, 10,368 runs)
 python -m openml_to_prov --mode scaled
 
-# Generate large corpus (~714 MB, 24,624 runs)
+# Generate large corpus (~772 MB, 24,624 runs)
 python -m openml_to_prov --mode large
 
-# Generate full corpus (~2.2 GB, 76,032 runs)
+# Generate full corpus (~2.7 GB, 76,032 runs)
 python -m openml_to_prov --mode full
 ```
 

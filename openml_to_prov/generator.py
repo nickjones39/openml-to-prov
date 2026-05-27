@@ -3,21 +3,32 @@
 import json
 import random
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
 from .config import (
-    CorpusConfig, CC18_TASK_IDS, EXTENDED_CLASSIFICATION_TASK_IDS, 
-    EXTENDED_CLASSIFICATION_FULL_TASK_IDS, REGRESSION_TASK_IDS, DATASET_TEMPLATES
-)
-from .models import get_original_config, get_classification_configs, get_regression_configs
-from .prov_builder import ProvDocumentBuilder
-from .utils import (
-    generate_run_id, compute_sha256, get_timestamp,
-    get_environment_info, generate_synthetic_metric
+    CC18_TASK_IDS,
+    DATASET_TEMPLATES,
+    EXTENDED_CLASSIFICATION_FULL_TASK_IDS,
+    EXTENDED_CLASSIFICATION_TASK_IDS,
+    REGRESSION_TASK_IDS,
+    CorpusConfig,
 )
 from .executor import OpenMLExecutor
+from .models import (
+    get_classification_configs,
+    get_original_config,
+    get_regression_configs,
+)
+from .prov_builder import ProvDocumentBuilder
+from .utils import (
+    compute_sha256,
+    generate_run_id,
+    generate_synthetic_metric,
+    get_environment_info,
+    get_timestamp,
+)
 
 
 class CorpusGenerator:
@@ -81,7 +92,9 @@ class CorpusGenerator:
             return tasks
         else:  # full
             tasks = [(t, "classification") for t in cc18]
-            tasks += [(t, "classification") for t in EXTENDED_CLASSIFICATION_FULL_TASK_IDS]
+            tasks += [
+                (t, "classification") for t in EXTENDED_CLASSIFICATION_FULL_TASK_IDS
+            ]
             tasks += [(t, "regression") for t in REGRESSION_TASK_IDS]
             return tasks
 
@@ -102,14 +115,21 @@ class CorpusGenerator:
             "dataset_name": random.choice(templates).format(task_id),
             "n_samples": random.randint(500, 50000),
             "n_features": random.randint(10, 500),
-            "n_classes": random.randint(2, 10) if task_type == "classification" else None,
+            "n_classes": random.randint(2, 10)
+            if task_type == "classification"
+            else None,
             "task_type": task_type,
             "metric": "accuracy" if task_type == "classification" else "r2_score",
         }
 
     def build_prov(
-        self, task_id: int, ds: Dict, model: str,
-        cfg: Dict, cfg_idx: int, task_type: str,
+        self,
+        task_id: int,
+        ds: Dict,
+        model: str,
+        cfg: Dict,
+        cfg_idx: int,
+        task_type: str,
         real_fold_results: Optional[List[Dict]] = None,
     ) -> ProvDocumentBuilder:
         """Build a PROV document for a single run."""
@@ -120,49 +140,64 @@ class CorpusGenerator:
 
         # Agent
         agent = "ag:system/OpenML"
-        b.add_agent(agent, {
-            "prov:type": "prov:SoftwareAgent",
-            "prov:label": f"OpenML sklearn - {model}"
-        })
+        b.add_agent(
+            agent,
+            {
+                "prov:type": "prov:SoftwareAgent",
+                "prov:label": f"OpenML sklearn - {model}",
+            },
+        )
 
         # Dataset entity
         ds_ent = f"e:dataset/{ds['dataset_id']}"
-        b.add_entity(ds_ent, {
-            "prov:label": f"Dataset {ds['dataset_id']}",
-            "prov:type": "openml:Dataset",
-            "openml:data_id": ds['dataset_id'],
-            "ml:n_samples": ds['n_samples'],
-            "ml:n_features": ds['n_features'],
-            "ml:task_type": task_type,
-            "checksum:sha256": compute_sha256(f"ds_{ds['dataset_id']}")
-        })
+        b.add_entity(
+            ds_ent,
+            {
+                "prov:label": f"Dataset {ds['dataset_id']}",
+                "prov:type": "openml:Dataset",
+                "openml:data_id": ds["dataset_id"],
+                "ml:n_samples": ds["n_samples"],
+                "ml:n_features": ds["n_features"],
+                "ml:task_type": task_type,
+                "checksum:sha256": compute_sha256(f"ds_{ds['dataset_id']}"),
+            },
+        )
 
         # Task entity
         task_ent = f"e:task/{task_id}"
-        b.add_entity(task_ent, {
-            "prov:label": f"Task {task_id}",
-            "prov:type": "openml:Task",
-            "openml:task_id": task_id,
-            "openml:task_type": f"Supervised {task_type.capitalize()}"
-        })
+        b.add_entity(
+            task_ent,
+            {
+                "prov:label": f"Task {task_id}",
+                "prov:type": "openml:Task",
+                "openml:task_id": task_id,
+                "openml:task_type": f"Supervised {task_type.capitalize()}",
+            },
+        )
 
         # Flow entity
         flow_ent = f"e:flow/{run_id}"
-        b.add_entity(flow_ent, {
-            "prov:label": f"Flow: {model}",
-            "prov:type": "openml:Flow",
-            "openml:model": model,
-            "openml:flow_hash": compute_sha256(cfg)[:16]
-        })
+        b.add_entity(
+            flow_ent,
+            {
+                "prov:label": f"Flow: {model}",
+                "prov:type": "openml:Flow",
+                "openml:model": model,
+                "openml:flow_hash": compute_sha256(cfg)[:16],
+            },
+        )
 
         # Flow parameters entity
         params_ent = f"e:flowparams/{run_id}"
-        b.add_entity(params_ent, {
-            "prov:label": f"{model} cfg {cfg_idx}",
-            "prov:type": "openml:FlowParameters",
-            "params": cfg,
-            "flowparams:sha256": compute_sha256(cfg)
-        })
+        b.add_entity(
+            params_ent,
+            {
+                "prov:label": f"{model} cfg {cfg_idx}",
+                "prov:type": "openml:FlowParameters",
+                "openml:parameters": json.dumps(cfg, sort_keys=True),
+                "checksum:sha256": compute_sha256(cfg),
+            },
+        )
 
         # Environment entity
         env_ent = f"e:env/{run_id}"
@@ -170,21 +205,29 @@ class CorpusGenerator:
 
         # Experiment activity
         exp_act = f"a:experiment/t{task_id}_{model}_cfg{cfg_idx}"
-        b.add_activity(exp_act, {
-            "prov:label": f"Experiment: {model} cfg{cfg_idx} task{task_id}",
-            "prov:type": "openml:Experiment",
-            "prov:startTime": ts,
-            "prov:endTime": get_timestamp(60)
-        })
+        b.add_activity(
+            exp_act,
+            {
+                "prov:label": f"Experiment: {model} cfg{cfg_idx} task{task_id}",
+                "prov:type": "openml:Experiment",
+                "prov:startTime": ts,
+                "prov:endTime": get_timestamp(60),
+            },
+        )
         b.add_association(exp_act, agent)
-        for ent, role in [(ds_ent, "dataset"), (task_ent, "task"), 
-                          (flow_ent, "flow"), (params_ent, "params"), (env_ent, "env")]:
+        for ent, role in [
+            (ds_ent, "dataset"),
+            (task_ent, "task"),
+            (flow_ent, "flow"),
+            (params_ent, "params"),
+            (env_ent, "env"),
+        ]:
             b.add_used(exp_act, ent, role)
 
         # Per-fold provenance
         fold_metrics, scores = [], []
-        default_train_sz = int(ds['n_samples'] * 0.8)
-        default_test_sz = ds['n_samples'] - default_train_sz
+        default_train_sz = int(ds["n_samples"] * 0.8)
+        default_test_sz = ds["n_samples"] - default_train_sz
 
         for f in range(self.config.n_folds):
             fn = f + 1
@@ -217,47 +260,64 @@ class CorpusGenerator:
 
             # Split entity
             split = f"e:split/{fs}"
-            b.add_entity(split, {
-                "prov:label": f"Split fold {fn}",
-                "prov:type": "openml:Split",
-                "fold:number": fn,
-                "fold:train_size": train_sz,
-                "fold:test_size": test_sz
-            })
+            b.add_entity(
+                split,
+                {
+                    "prov:label": f"Split fold {fn}",
+                    "prov:type": "openml:Split",
+                    "fold:number": fn,
+                    "fold:train_size": train_sz,
+                    "fold:test_size": test_sz,
+                },
+            )
 
             # Train activity
             train = f"a:train/{fs}"
-            b.add_activity(train, {
-                "prov:label": f"Train fold {fn}",
-                "prov:type": "openml:Train",
-                "prov:startTime": train_start,
-                "prov:endTime": train_end,
-            })
+            b.add_activity(
+                train,
+                {
+                    "prov:label": f"Train fold {fn}",
+                    "prov:type": "openml:Train",
+                    "prov:startTime": train_start,
+                    "prov:endTime": train_end,
+                },
+            )
             b.add_association(train, agent)
-            for ent, role in [(ds_ent, "data"), (split, "split"), (flow_ent, "flow"),
-                              (params_ent, "params"), (env_ent, "env")]:
+            for ent, role in [
+                (ds_ent, "data"),
+                (split, "split"),
+                (flow_ent, "flow"),
+                (params_ent, "params"),
+                (env_ent, "env"),
+            ]:
                 b.add_used(train, ent, role)
             b.add_communication(train, exp_act)
 
             # Model entity
             mdl = f"e:model/{fs}"
-            b.add_entity(mdl, {
-                "prov:label": f"Model fold {fn}",
-                "prov:type": "openml:Model",
-                "model:name": model,
-                "checksum:sha256": compute_sha256(f"mdl_{fs}")
-            })
+            b.add_entity(
+                mdl,
+                {
+                    "prov:label": f"Model fold {fn}",
+                    "prov:type": "openml:Model",
+                    "openml:model_name": model,
+                    "checksum:sha256": compute_sha256(f"mdl_{fs}"),
+                },
+            )
             b.add_generation(mdl, train)
             b.add_attribution(mdl, agent)
 
             # Predict activity
             pred_act = f"a:predict/{fs}"
-            b.add_activity(pred_act, {
-                "prov:label": f"Predict fold {fn}",
-                "prov:type": "openml:Predict",
-                "prov:startTime": pred_start,
-                "prov:endTime": pred_end,
-            })
+            b.add_activity(
+                pred_act,
+                {
+                    "prov:label": f"Predict fold {fn}",
+                    "prov:type": "openml:Predict",
+                    "prov:startTime": pred_start,
+                    "prov:endTime": pred_end,
+                },
+            )
             b.add_association(pred_act, agent)
             for ent, role in [(mdl, "model"), (ds_ent, "data"), (split, "split")]:
                 b.add_used(pred_act, ent, role)
@@ -265,22 +325,28 @@ class CorpusGenerator:
 
             # Predictions entity
             preds = f"e:predictions/{fs}"
-            b.add_entity(preds, {
-                "prov:label": f"Predictions fold {fn}",
-                "prov:type": "openml:Predictions",
-                "pred:rows": test_sz,
-                "checksum:sha256": compute_sha256(f"preds_{fs}")
-            })
+            b.add_entity(
+                preds,
+                {
+                    "prov:label": f"Predictions fold {fn}",
+                    "prov:type": "openml:Predictions",
+                    "ml:n_predictions": test_sz,
+                    "checksum:sha256": compute_sha256(f"preds_{fs}"),
+                },
+            )
             b.add_generation(preds, pred_act)
 
             # Evaluate activity
             eval_act = f"a:evaluate/{fs}"
-            b.add_activity(eval_act, {
-                "prov:label": f"Evaluate fold {fn}",
-                "prov:type": "openml:Evaluate",
-                "prov:startTime": eval_start,
-                "prov:endTime": eval_end,
-            })
+            b.add_activity(
+                eval_act,
+                {
+                    "prov:label": f"Evaluate fold {fn}",
+                    "prov:type": "openml:Evaluate",
+                    "prov:startTime": eval_start,
+                    "prov:endTime": eval_end,
+                },
+            )
             b.add_association(eval_act, agent)
             b.add_used(eval_act, preds, "predictions")
             b.add_used(eval_act, split, "split")
@@ -288,12 +354,15 @@ class CorpusGenerator:
 
             # Metrics entity
             metrics = f"e:metrics/{fs}"
-            b.add_entity(metrics, {
-                "prov:label": f"Metrics fold {fn}",
-                "prov:type": "openml:Metrics",
-                f"openml:{metric}": round(score, 6),
-                "openml:n_samples": test_sz
-            })
+            b.add_entity(
+                metrics,
+                {
+                    "prov:label": f"Metrics fold {fn}",
+                    "prov:type": "openml:Metrics",
+                    f"openml:{metric}": round(score, 6),
+                    "openml:n_samples": test_sz,
+                },
+            )
             b.add_generation(metrics, eval_act)
             b.add_derivation(metrics, preds)
             b.add_derivation(metrics, split)
@@ -301,23 +370,26 @@ class CorpusGenerator:
 
         # Aggregate activity
         agg_act = f"a:aggregate/{run_id}"
-        b.add_activity(agg_act, {
-            "prov:label": "Aggregate",
-            "prov:type": "openml:AggregateEvaluate"
-        })
+        b.add_activity(
+            agg_act,
+            {"prov:label": "Aggregate", "prov:type": "openml:AggregateEvaluate"},
+        )
         b.add_association(agg_act, agent)
         for fm in fold_metrics:
             b.add_used(agg_act, fm, "fold-metrics")
 
         # Aggregate metrics entity
         agg_met = f"e:metrics_agg/{run_id}"
-        b.add_entity(agg_met, {
-            "prov:label": "Aggregate Metrics",
-            "prov:type": "openml:AggregateMetrics",
-            f"openml:{metric}_mean": round(float(np.mean(scores)), 6),
-            f"openml:{metric}_std": round(float(np.std(scores)), 6),
-            "openml:n_folds": self.config.n_folds
-        })
+        b.add_entity(
+            agg_met,
+            {
+                "prov:label": "Aggregate Metrics",
+                "prov:type": "openml:AggregateMetrics",
+                f"openml:{metric}_mean": round(float(np.mean(scores)), 6),
+                f"openml:{metric}_std": round(float(np.std(scores)), 6),
+                "openml:n_folds": self.config.n_folds,
+            },
+        )
         b.add_generation(agg_met, agg_act)
         for fm in fold_metrics:
             b.add_derivation(agg_met, fm)
@@ -341,8 +413,14 @@ class CorpusGenerator:
             if v > bucket["max"]:
                 bucket["max"] = v
             bucket["total"] += v
-        for rel in ["used", "wasGeneratedBy", "wasAssociatedWith",
-                    "wasInformedBy", "wasAttributedTo", "wasDerivedFrom"]:
+        for rel in [
+            "used",
+            "wasGeneratedBy",
+            "wasAssociatedWith",
+            "wasInformedBy",
+            "wasAttributedTo",
+            "wasDerivedFrom",
+        ]:
             gs_out["edge_breakdown"][rel] += gs[rel]
 
     def process_task(self, task_id: int, task_type: str, idx: int, total: int) -> Dict:
@@ -377,10 +455,14 @@ class CorpusGenerator:
                         ds = result["dataset_meta"]
                         real_fold_results = result["fold_results"]
                     except Exception as exc:
-                        print(f"    WARNING: real execution failed unexpectedly ({exc}), falling back to synthetic")
+                        print(
+                            f"    WARNING: real execution failed unexpectedly ({exc}), falling back to synthetic"
+                        )
                 if real_fold_results is not None:
                     self.stats["real_execution"] = True
-                prov = self.build_prov(task_id, ds, model, cfg, cfg_idx, task_type, real_fold_results)
+                prov = self.build_prov(
+                    task_id, ds, model, cfg, cfg_idx, task_type, real_fold_results
+                )
                 gs = prov.graph_stats()
                 prov_json = prov.to_json(self.config.pretty_print)
                 (model_dir / f"prov_{generate_run_id()}.json").write_text(prov_json)
@@ -400,8 +482,10 @@ class CorpusGenerator:
 
         if self.config.verbose:
             mb = self.stats["total_bytes"] / (1024 * 1024)
-            print(f"  [{idx+1}/{total}] Task {task_id} ({task_type[:3]}): "
-                  f"{stats['runs']} runs, {stats['bytes']/1024:.1f} KB (Total: {mb:.1f} MB)")
+            print(
+                f"  [{idx + 1}/{total}] Task {task_id} ({task_type[:3]}): "
+                f"{stats['runs']} runs, {stats['bytes'] / 1024:.1f} KB (Total: {mb:.1f} MB)"
+            )
         return stats
 
     def generate(self, max_tasks: Optional[int] = None) -> Dict:
@@ -414,7 +498,9 @@ class CorpusGenerator:
         n_reg = sum(1 for _, t in tasks if t == "regression")
         clf_cfgs = sum(len(c) for c in get_classification_configs().values())
         reg_cfgs = sum(len(c) for c in get_regression_configs().values())
-        expected = n_clf * (1 if self.config.mode == "light" else clf_cfgs) + n_reg * reg_cfgs
+        expected = (
+            n_clf * (1 if self.config.mode == "light" else clf_cfgs) + n_reg * reg_cfgs
+        )
 
         print("=" * 70)
         print(f"PROV Corpus Generator - {self.config.mode.upper()} MODE")
@@ -433,8 +519,13 @@ class CorpusGenerator:
         n = self.stats["total_runs"]
         if n > 0:
             gs = self.stats["graph_structure"]
-            for field in ["nodes_per_graph", "edges_per_graph", "entities_per_graph",
-                          "activities_per_graph", "agents_per_graph"]:
+            for field in [
+                "nodes_per_graph",
+                "edges_per_graph",
+                "entities_per_graph",
+                "activities_per_graph",
+                "agents_per_graph",
+            ]:
                 bucket = gs[field]
                 bucket["avg"] = round(bucket["total"] / n, 2)
                 if bucket["min"] == float("inf"):
@@ -449,13 +540,21 @@ class CorpusGenerator:
             "stats": self.stats,
             "task_sources": {
                 "CC18": len(CC18_TASK_IDS),
-                "extended_classification": len(EXTENDED_CLASSIFICATION_TASK_IDS) if self.config.mode == "large" else (
-                    len(EXTENDED_CLASSIFICATION_FULL_TASK_IDS) if self.config.mode == "full" else 0
+                "extended_classification": len(EXTENDED_CLASSIFICATION_TASK_IDS)
+                if self.config.mode == "large"
+                else (
+                    len(EXTENDED_CLASSIFICATION_FULL_TASK_IDS)
+                    if self.config.mode == "full"
+                    else 0
                 ),
-                "regression": len(REGRESSION_TASK_IDS) if self.config.mode == "full" else 0,
-            }
+                "regression": len(REGRESSION_TASK_IDS)
+                if self.config.mode == "full"
+                else 0,
+            },
         }
-        (self.output_dir / "corpus_manifest.json").write_text(json.dumps(manifest, indent=2))
+        (self.output_dir / "corpus_manifest.json").write_text(
+            json.dumps(manifest, indent=2)
+        )
 
         gb = self.stats["total_bytes"] / (1024**3)
         gs = self.stats["graph_structure"]
@@ -464,22 +563,36 @@ class CorpusGenerator:
         ents = gs["entities_per_graph"]
         acts = gs["activities_per_graph"]
         agts = gs["agents_per_graph"]
-        print(f"\n{'='*70}\nCOMPLETE\n{'='*70}")
-        print(f"Classification: {self.stats['classification_tasks']} | "
-              f"Regression: {self.stats['regression_tasks']}")
+        print(f"\n{'=' * 70}\nCOMPLETE\n{'=' * 70}")
+        print(
+            f"Classification: {self.stats['classification_tasks']} | "
+            f"Regression: {self.stats['regression_tasks']}"
+        )
         print(f"Total runs:     {self.stats['total_runs']:,}")
-        print(f"Total size:     {self.stats['total_bytes']/(1024**2):.1f} MB ({gb:.2f} GB)")
+        print(
+            f"Total size:     {self.stats['total_bytes'] / (1024**2):.1f} MB ({gb:.2f} GB)"
+        )
         print(f"\nGraph structure (per run):")
-        print(f"  Nodes:      avg={nodes.get('avg', 'n/a')}  "
-              f"min={nodes['min']}  max={nodes['max']}")
-        print(f"  Edges:      avg={edges.get('avg', 'n/a')}  "
-              f"min={edges['min']}  max={edges['max']}")
-        print(f"  Entities:   avg={ents.get('avg', 'n/a')}  "
-              f"min={ents['min']}  max={ents['max']}")
-        print(f"  Activities: avg={acts.get('avg', 'n/a')}  "
-              f"min={acts['min']}  max={acts['max']}")
-        print(f"  Agents:     avg={agts.get('avg', 'n/a')}  "
-              f"min={agts['min']}  max={agts['max']}")
+        print(
+            f"  Nodes:      avg={nodes.get('avg', 'n/a')}  "
+            f"min={nodes['min']}  max={nodes['max']}"
+        )
+        print(
+            f"  Edges:      avg={edges.get('avg', 'n/a')}  "
+            f"min={edges['min']}  max={edges['max']}"
+        )
+        print(
+            f"  Entities:   avg={ents.get('avg', 'n/a')}  "
+            f"min={ents['min']}  max={ents['max']}"
+        )
+        print(
+            f"  Activities: avg={acts.get('avg', 'n/a')}  "
+            f"min={acts['min']}  max={acts['max']}"
+        )
+        print(
+            f"  Agents:     avg={agts.get('avg', 'n/a')}  "
+            f"min={agts['min']}  max={agts['max']}"
+        )
         eb = gs["edge_breakdown"]
         print(f"  Edge breakdown (totals across all runs):")
         for rel, count in eb.items():

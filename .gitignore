@@ -13,4 +13,5 @@
 !.gitignore
 
 # Never commit secrets
-.env
+.env.claude/
+.claude/
