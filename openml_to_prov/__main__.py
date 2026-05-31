@@ -77,6 +77,42 @@ Task sources:
         action="store_true",
         help="Skip the runtime confirmation prompt shown for --real with non-light modes.",
     )
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        help=(
+            "Validate each PROV-JSON document for conformance before writing it "
+            "to the corpus, and emit conformance_report.json. SHACL and PROV-O "
+            "round-trip checks need optional deps (pyshacl, rdflib, prov); they "
+            "are skipped gracefully if absent."
+        ),
+    )
+    parser.add_argument(
+        "--validation-checks",
+        default="schema,shacl,round_trip",
+        help=(
+            "Comma-separated checks to run with --validate. "
+            "Options: schema, shacl, round_trip. "
+            "Default: schema,shacl,round_trip. For fast CI use 'schema'."
+        ),
+    )
+    parser.add_argument(
+        "--validation-policy",
+        choices=["strict", "warn", "abort"],
+        default="strict",
+        help=(
+            "On validation failure: 'strict' skips and logs the doc (default), "
+            "'warn' writes it anyway but flags it, 'abort' stops the run."
+        ),
+    )
+    parser.add_argument(
+        "--no-cardinality-check",
+        action="store_true",
+        help=(
+            "Disable the 44-node/128-edge template assertion in the schema "
+            "check (use when extending the EAA mapping, e.g. 10-fold CV)."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -112,6 +148,12 @@ Task sources:
         verbose=not args.quiet,
         pretty_print=not args.compact,
         use_real_execution=args.real,
+        validate=args.validate,
+        validation_checks=tuple(
+            c.strip() for c in args.validation_checks.split(",") if c.strip()
+        ),
+        validation_policy=args.validation_policy,
+        validation_cardinality=not args.no_cardinality_check,
     )
 
     generator = CorpusGenerator(config)

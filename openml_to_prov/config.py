@@ -13,6 +13,21 @@ class CorpusConfig:
     pretty_print: bool = True
     use_real_execution: bool = False  # light mode only: run actual sklearn + OpenML
 
+    # --- Conformance validation -------------------------------------------
+    # When enabled, each generated PROV-JSON document is validated before it
+    # is written to the corpus. A conformance_report.json is written alongside
+    # the manifest. Heavier checks (SHACL, PROV-O round-trip) require optional
+    # deps (pyshacl, rdflib, prov) and are skipped gracefully if absent.
+    validate: bool = False
+    # Checks to run when validate=True. Subset of {"schema","shacl","round_trip"}.
+    validation_checks: tuple = ("schema", "shacl", "round_trip")
+    # Failure policy: "strict" skips the failing doc and logs it; "warn"
+    # writes it anyway but flags it in the report; "abort" stops the run.
+    validation_policy: str = "strict"
+    # Assert the 44-node/128-edge template in the schema check. Disable if you
+    # extend the EAA mapping (e.g. 10-fold CV) where counts legitimately differ.
+    validation_cardinality: bool = True
+
 
 # =============================================================================
 # OpenML Benchmark Task IDs

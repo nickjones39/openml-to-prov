@@ -29,6 +29,7 @@ The pipeline captures:
 - **Reproducibility**: Environment and parameter capture included
 - **Per-fold granularity**: Separate train/predict/evaluate chains for each CV fold
 - **144 model configurations**: 12 classifiers/regressors × 12 hyperparameter settings
+- **Conformance validation**: Optional pre-write checks (PROV-JSON schema, SHACL shapes, PROV-O round-trip) with a machine-readable `conformance_report.json`
 - **Outputs**:
   - PROV-JSON files per run (`prov_*.json`)
   - Corpus manifest with statistics
@@ -87,6 +88,13 @@ pip install -r requirements.txt
 - `prov`
 - `graphviz`
 
+**Optional** (for conformance validation, `--validate`):
+- `rdflib`
+- `pyshacl`
+- `prov`
+
+> The schema check runs with no extra dependencies. The SHACL and PROV-O round-trip checks require the packages above; if they are not installed, those checks are skipped gracefully (recorded as `skipped` in the report) rather than failing.
+
 ### OpenML API Key (for `--real` mode)
 
 Real execution against the OpenML API requires an API key to avoid rate limiting. Get one free at [openml.org](https://www.openml.org/) → profile → API key, then create a `.env` file in the repo root:
@@ -130,6 +138,7 @@ python -m openml_to_prov --mode full --compact            # Minified JSON (small
 python -m openml_to_prov --mode full --quiet              # Suppress progress output
 python -m openml_to_prov --mode full --max-tasks 10       # Limit tasks (for testing)
 python -m openml_to_prov --mode light --real              # Real OpenML + sklearn execution
+python -m openml_to_prov --mode light --validate          # Validate each graph before writing
 ```
 
 ### Real Execution Mode (`--real`)
@@ -168,6 +177,50 @@ Estimated wall-clock per mode at `--real` (measured baseline: `light` = ~45 min 
 
 For scales beyond `light`, use `--max-tasks` to validate a representative subset rather than running the entire corpus.
 
+### Conformance Validation (`--validate`)
+
+By default, documents are written without validation. The `--validate` flag turns on conformance checking: each PROV-JSON document is validated **before** it is written to the corpus, and a `conformance_report.json` is written alongside `corpus_manifest.json`. This provides machine-checkable evidence of PROV conformance rather than assertions of validity.
+
+Three independent checks are available:
+
+- **`schema`** — Structural PROV-JSON conformance: required top-level blocks and prefixes, every element carries a `prov:type`, every relation references declared elements, and (by default) the expected 44-node / 128-edge per-run cardinality. No extra dependencies.
+- **`shacl`** — SHACL shapes validated over the PROV-O graph (requires `rdflib` + `pyshacl`).
+- **`round_trip`** — PROV-O round-trip: the document is parsed to a PROV model, serialised to RDF, round-tripped through PROV-JSON again, and the two RDF graphs are checked for isomorphism (requires `prov` + `rdflib`).
+
+```bash
+# Validate with all three checks (default), strict policy
+python -m openml_to_prov --mode light --validate
+
+# Fast CI run: schema check only, no optional dependencies needed
+python -m openml_to_prov --mode light --validate --validation-checks schema
+
+# Choose specific checks
+python -m openml_to_prov --mode scaled --validate --validation-checks schema,round_trip
+
+# Failure policy: warn (write anyway, flag in report) instead of strict (skip)
+python -m openml_to_prov --mode large --validate --validation-policy warn
+
+# Disable the 44/128 cardinality assertion (e.g. when extending to 10-fold CV)
+python -m openml_to_prov --mode light --validate --no-cardinality-check
+```
+
+**Options:**
+
+- `--validation-checks` — Comma-separated subset of `schema`, `shacl`, `round_trip`. Default: `schema,shacl,round_trip`.
+- `--validation-policy` — On failure: `strict` skips the document and logs it (default), `warn` writes it anyway but flags it in the report, `abort` stops the run.
+- `--no-cardinality-check` — Disable the per-run 44-node / 128-edge template assertion in the schema check. Use when extending the Entity–Activity–Agent mapping (e.g. a different fold count), where node/edge counts legitimately differ.
+
+The `conformance_report.json` records the checks run, the failure policy, per-check pass/fail/skip counts, total documents validated, and a capped list of any failures with their file paths. Programmatically, the same configuration is available via `CorpusConfig(validate=True, validation_checks=(...), validation_policy="strict", validation_cardinality=True)`, and the `ProvValidator` class can be used standalone:
+
+```python
+import json
+from openml_to_prov import ProvValidator
+
+doc = json.load(open("prov_corpus/task_3/RandomForest/prov_xxx.json"))
+result = ProvValidator(checks=("schema", "shacl", "round_trip")).validate(doc)
+print(result.valid, result.error_summary())
+```
+
 ### Programmatic API
 
 ```python
@@ -195,6 +248,7 @@ print(f"Total size: {stats['total_bytes'] / 1e6:.1f} MB")
 ```
 prov_corpus/
 ├── corpus_manifest.json          # Corpus metadata and statistics
+├── conformance_report.json       # Validation results (only when --validate is used)
 ├── task_3/
 │   ├── RandomForest/
 │   │   ├── prov_<uuid>.json      # PROV document for config 0
@@ -300,6 +354,7 @@ openml_to_prov/
 ├── generator.py      # CorpusGenerator class
 ├── models.py         # Classifier/regressor configurations
 ├── prov_builder.py   # W3C PROV document builder
+├── validator.py      # Conformance validation (schema, SHACL, PROV-O round-trip)
 └── utils.py          # Utility functions (hashing, timestamps, metrics)
 ```
 

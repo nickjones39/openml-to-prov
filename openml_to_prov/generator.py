@@ -29,6 +29,7 @@ from .utils import (
     get_environment_info,
     get_timestamp,
 )
+from .validator import ProvValidator
 
 
 class CorpusGenerator:
@@ -68,6 +69,30 @@ class CorpusGenerator:
             if config.use_real_execution
             else None
         )
+
+        # --- Conformance validation setup ---------------------------------
+        self.validator = (
+            ProvValidator(
+                checks=tuple(config.validation_checks),
+                expected_cardinality=config.validation_cardinality,
+            )
+            if config.validate
+            else None
+        )
+        self.validation_report = {
+            "enabled": bool(config.validate),
+            "checks": list(config.validation_checks) if config.validate else [],
+            "policy": config.validation_policy,
+            "documents_validated": 0,
+            "documents_passed": 0,
+            "documents_failed": 0,
+            "documents_skipped_write": 0,  # failed under "strict"
+            "check_pass_counts": {},
+            "check_fail_counts": {},
+            "check_skip_counts": {},
+            "failures": [],  # capped list of {path, summary}
+        }
+        self._max_recorded_failures = 200
 
     def _cc18_ids(self) -> List[int]:
         """Return CC18 task IDs — live from OpenML suite 99 if executor is on, else hardcoded fallback."""
@@ -423,6 +448,54 @@ class CorpusGenerator:
         ]:
             gs_out["edge_breakdown"][rel] += gs[rel]
 
+    def _gate_document(self, doc: Dict, out_path: Path) -> bool:
+        """Validate one document and update the report.
+
+        Returns True if the document may be written, False if it must be
+        skipped. Implements the configured failure policy:
+          - "strict": failing docs are skipped (return False).
+          - "warn":   failing docs are written anyway (return True) but flagged.
+          - "abort":  failing docs raise RuntimeError, stopping the run.
+        """
+        report = self.validation_report
+        result = self.validator.validate(doc)
+        report["documents_validated"] += 1
+
+        for c in result.checks:
+            bucket = {
+                "pass": "check_pass_counts",
+                "fail": "check_fail_counts",
+                "skipped": "check_skip_counts",
+            }[c.status]
+            report[bucket][c.name] = report[bucket].get(c.name, 0) + 1
+
+        if result.valid:
+            report["documents_passed"] += 1
+            return True
+
+        report["documents_failed"] += 1
+        summary = result.error_summary()
+        if len(report["failures"]) < self._max_recorded_failures:
+            report["failures"].append(
+                {"path": str(out_path), "summary": summary}
+            )
+
+        policy = self.config.validation_policy
+        if policy == "abort":
+            raise RuntimeError(
+                f"Validation failed for {out_path} ({summary}); "
+                f"aborting (policy='abort')."
+            )
+        if policy == "warn":
+            if self.config.verbose:
+                print(f"    WARN invalid PROV written anyway: {out_path.name} — {summary}")
+            return True
+        # strict (default)
+        report["documents_skipped_write"] += 1
+        if self.config.verbose:
+            print(f"    SKIP invalid PROV: {out_path.name} — {summary}")
+        return False
+
     def process_task(self, task_id: int, task_type: str, idx: int, total: int) -> Dict:
         """Process a single task with all model configurations."""
         ds = self.generate_dataset_info(task_id, task_type)
@@ -465,7 +538,15 @@ class CorpusGenerator:
                 )
                 gs = prov.graph_stats()
                 prov_json = prov.to_json(self.config.pretty_print)
-                (model_dir / f"prov_{generate_run_id()}.json").write_text(prov_json)
+                out_path = model_dir / f"prov_{generate_run_id()}.json"
+
+                # --- Conformance gate -------------------------------------
+                if self.validator is not None:
+                    if not self._gate_document(prov.doc, out_path):
+                        # Strict policy: skip writing this document.
+                        continue
+
+                out_path.write_text(prov_json)
                 sz = len(prov_json.encode())
                 self.stats["total_runs"] += 1
                 self.stats["total_files"] += 1
@@ -556,6 +637,12 @@ class CorpusGenerator:
             json.dumps(manifest, indent=2)
         )
 
+        # Write conformance report (the reviewer-requested artefact).
+        if self.config.validate:
+            (self.output_dir / "conformance_report.json").write_text(
+                json.dumps(self.validation_report, indent=2)
+            )
+
         gb = self.stats["total_bytes"] / (1024**3)
         gs = self.stats["graph_structure"]
         nodes = gs["nodes_per_graph"]
@@ -597,4 +684,21 @@ class CorpusGenerator:
         print(f"  Edge breakdown (totals across all runs):")
         for rel, count in eb.items():
             print(f"    {rel}: {count:,}")
+
+        if self.config.validate:
+            vr = self.validation_report
+            print(f"\nConformance validation ({vr['policy']} policy):")
+            print(f"  Checks:    {', '.join(vr['checks'])}")
+            print(f"  Validated: {vr['documents_validated']:,}")
+            print(f"  Passed:    {vr['documents_passed']:,}")
+            print(f"  Failed:    {vr['documents_failed']:,}")
+            if vr["documents_skipped_write"]:
+                print(f"  Skipped (not written): {vr['documents_skipped_write']:,}")
+            for name in vr["checks"]:
+                p = vr["check_pass_counts"].get(name, 0)
+                f = vr["check_fail_counts"].get(name, 0)
+                s = vr["check_skip_counts"].get(name, 0)
+                note = "  [skipped: dep missing]" if s and not (p or f) else ""
+                print(f"    {name}: {p:,} pass / {f:,} fail / {s:,} skip{note}")
+            print(f"  Report:    {self.output_dir / 'conformance_report.json'}")
         return self.stats

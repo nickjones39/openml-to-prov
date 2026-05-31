@@ -115,15 +115,30 @@ class OpenMLExecutor:
         "regression": "Supervised Regression",
     }
 
-    def get_suite_task_ids(self, suite_id: int) -> Optional[List[int]]:
-        """Fetch live task IDs for an OpenML benchmark suite (e.g. 99 = CC18). Returns None on failure."""
-        try:
-            suite = self._openml.study.get_suite(suite_id)
-            return [int(t) for t in suite.tasks]
-        except Exception as exc:
-            if self.verbose:
-                print(f"  WARNING: could not fetch suite {suite_id} from OpenML: {exc}")
-            return None
+    def get_suite_task_ids(
+        self, suite_id: int, retries: int = 3, delay: float = 5.0
+    ) -> Optional[List[int]]:
+        """Fetch live task IDs for an OpenML benchmark suite (e.g. 99 = CC18).
+
+        Retries on transient errors (e.g. 504 Gateway Time-out, network blips)
+        with exponential backoff. Returns None after all attempts fail, so the
+        caller can fall back to the hardcoded task list.
+        """
+        for attempt in range(retries):
+            try:
+                suite = self._openml.study.get_suite(suite_id)
+                return [int(t) for t in suite.tasks]
+            except Exception as exc:
+                if attempt == retries - 1:
+                    if self.verbose:
+                        print(f"  WARNING: could not fetch suite {suite_id} from OpenML "
+                              f"after {retries} attempts: {exc}")
+                    return None
+                wait = delay * (2 ** attempt)
+                if self.verbose:
+                    print(f"  suite {suite_id} fetch failed "
+                          f"(attempt {attempt+1}/{retries}): {exc} — retrying in {wait:.0f}s")
+                time.sleep(wait)
 
     def _get_task_with_retry(self, task_id: int, retries: int = 5, delay: float = 10.0):
         """Fetch an OpenML task, retrying on transient network or server errors."""
