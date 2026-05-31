@@ -1,7 +1,7 @@
 # openml-to-prov
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20281044.svg)](https://doi.org/10.5281/zenodo.20281044)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20470438.svg)](https://doi.org/10.5281/zenodo.20470438)
 
 **Generate W3C PROV-JSON provenance corpora from OpenML benchmark tasks for reproducible ML provenance research.**
 
@@ -88,12 +88,13 @@ pip install -r requirements.txt
 - `prov`
 - `graphviz`
 
-**Optional** (for conformance validation, `--validate`):
+**Optional** (for conformance validation `--validate`, and the `openml_to_prov.evaluate` RDF/SPARQL layers):
 - `rdflib`
 - `pyshacl`
 - `prov`
+- `matplotlib` (for `evaluate` plots only)
 
-> The schema check runs with no extra dependencies. The SHACL and PROV-O round-trip checks require the packages above; if they are not installed, those checks are skipped gracefully (recorded as `skipped` in the report) rather than failing.
+> The schema check and the compression layer of `evaluate` run with no extra dependencies. The SHACL and PROV-O round-trip checks, and the RDF/SPARQL layers of `evaluate`, require the packages above; if they are not installed, those steps are skipped gracefully rather than failing.
 
 ### OpenML API Key (for `--real` mode)
 
@@ -220,6 +221,39 @@ doc = json.load(open("prov_corpus/task_3/RandomForest/prov_xxx.json"))
 result = ProvValidator(checks=("schema", "shacl", "round_trip")).validate(doc)
 print(result.valid, result.error_summary())
 ```
+
+### Downstream Evaluation (`openml_to_prov.evaluate`)
+
+The `evaluate` module runs a baseline downstream evaluation over a generated corpus, demonstrating practical usability across three access patterns: generic **compression** (gzip/bz2/lzma ratios), **graph-database loading** (PROV-JSON → PROV-O RDF into an in-memory RDFLib store, reporting triples and load time), and **SPARQL querying** (five representative provenance queries with result counts and timing). It emits a JSON results file, two LaTeX tables, and two plots.
+
+```bash
+# Evaluate the light corpus (small — runs all of it)
+python -m openml_to_prov.evaluate --corpus prov_light_corpus --label light
+
+# Evaluate the full corpus; sample the RDF/SPARQL layers for tractability
+# (compression always runs over the whole corpus)
+python -m openml_to_prov.evaluate --corpus prov_full_synthetic \
+    --label full --sample 1000
+```
+
+**Options:**
+
+- `--corpus` — Path to a generated corpus directory (required).
+- `--label` — Label used in output filenames (default: corpus directory name).
+- `--sample N` — Sample `N` runs for the RDF loading and SPARQL layers. Compression always runs over the whole corpus. Recommended for large corpora (e.g. `--sample 1000`); omit to use every run.
+- `--outdir` — Output directory (default: `eval_results`).
+- `--seed` — Sampling seed (default: 42).
+- `--quiet` — Suppress progress output.
+
+Outputs, written under `--outdir`:
+
+- `eval_<label>.json` — Machine-readable results (raw/compressed bytes, ratios, triple counts, load and query timings).
+- `eval_<label>_compression.tex`, `eval_<label>_sparql.tex` — LaTeX tables.
+- `eval_<label>_compression.png`, `eval_<label>_query_timing.png` — Plots.
+
+The RDF and SPARQL layers require `rdflib` and `prov`; plots require `matplotlib`. If a dependency is missing, the corresponding layer is skipped gracefully. The compression layer needs only the standard library.
+
+> **Note on compression figures.** The codecs are applied to the corpus concatenated into a single byte stream, which isolates the cross-run redundancy that the corpus is designed to exhibit. Per-file archiving (e.g. a default `.zip`) reports a lower ratio (~6.5×) because it cannot reference structure shared across files, and `tar.gz` falls between the two owing to per-file header and padding overhead.
 
 ### Programmatic API
 
@@ -355,6 +389,7 @@ openml_to_prov/
 ├── models.py         # Classifier/regressor configurations
 ├── prov_builder.py   # W3C PROV document builder
 ├── validator.py      # Conformance validation (schema, SHACL, PROV-O round-trip)
+├── evaluate.py       # Baseline downstream evaluation (compression, RDF, SPARQL)
 └── utils.py          # Utility functions (hashing, timestamps, metrics)
 ```
 
@@ -362,17 +397,16 @@ openml_to_prov/
 
 ### Compression Research
 
-Generate corpora at multiple scales to validate provenance compression algorithms:
+Generate corpora at multiple scales, then run the built-in baseline evaluation (compression, RDF loading, SPARQL) to characterise them:
 
 ```bash
-# Generate test corpus
+# Generate corpora at two scales
 python -m openml_to_prov --mode light --output corpus_light
-
-# Generate validation corpus
 python -m openml_to_prov --mode large --output corpus_large
 
-# Measure compression ratio
-python your_compressor.py corpus_large/
+# Baseline compression + RDF + SPARQL over each
+python -m openml_to_prov.evaluate --corpus corpus_light --label light
+python -m openml_to_prov.evaluate --corpus corpus_large --label large --sample 1000
 ```
 
 ### Reproducibility Studies
@@ -404,9 +438,9 @@ If you use this software, please cite:
   title        = {openml-to-prov: Generate W3C PROV corpora from OpenML benchmarks},
   year         = {2025},
   publisher    = {Zenodo},
-  version      = {1.2.2},
-  doi          = {10.5281/zenodo.20281044},
-  url          = {https://doi.org/10.5281/zenodo.20281044}
+  version      = {1.2.4},
+  doi          = {10.5281/zenodo.20470438},
+  url          = {https://doi.org/10.5281/zenodo.20470438}
 }
 ```
 
