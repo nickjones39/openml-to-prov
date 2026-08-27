@@ -75,13 +75,21 @@ class CorpusGenerator:
             ProvValidator(
                 checks=tuple(config.validation_checks),
                 expected_cardinality=config.validation_cardinality,
+                require_deps=getattr(config, "validation_require_deps", False),
             )
             if config.validate
             else None
         )
         self.validation_report = {
             "enabled": bool(config.validate),
+            # Checks asked for. This is NOT proof they ran: a check whose
+            # optional dependency is missing is skipped unless require_deps
+            # is set. Read "checks_executed" (filled in at write time) for the
+            # checks that actually ran against every document.
             "checks": list(config.validation_checks) if config.validate else [],
+            "checks_requested": list(config.validation_checks) if config.validate else [],
+            "checks_executed": [],
+            "require_deps": bool(getattr(config, "validation_require_deps", False)),
             "policy": config.validation_policy,
             "documents_validated": 0,
             "documents_passed": 0,
@@ -639,8 +647,25 @@ class CorpusGenerator:
 
         # Write conformance report (the reviewer-requested artefact).
         if self.config.validate:
+            report = self.validation_report
+            # A check counts as executed only if it ran against every validated
+            # document without ever being skipped. Anything else is recorded as
+            # partial, so a report can never imply a guarantee it did not test.
+            n = report["documents_validated"]
+            executed, partial = [], {}
+            for name in report["checks_requested"]:
+                ran = (report["check_pass_counts"].get(name, 0)
+                       + report["check_fail_counts"].get(name, 0))
+                skipped = report["check_skip_counts"].get(name, 0)
+                if ran == n and not skipped:
+                    executed.append(name)
+                else:
+                    partial[name] = {"ran": ran, "skipped": skipped, "of": n}
+            report["checks_executed"] = executed
+            if partial:
+                report["checks_not_fully_executed"] = partial
             (self.output_dir / "conformance_report.json").write_text(
-                json.dumps(self.validation_report, indent=2)
+                json.dumps(report, indent=2)
             )
 
         gb = self.stats["total_bytes"] / (1024**3)

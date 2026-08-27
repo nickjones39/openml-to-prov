@@ -124,6 +124,13 @@ class ProvValidator:
         If True, the schema check also asserts the 44/128 node/edge template.
         Set False if you intend to extend the EAA mapping (e.g. 10-fold CV),
         where node/edge counts legitimately differ.
+    require_deps:
+        If True, a check whose optional dependency is unavailable is reported
+        as a *failure* instead of being skipped. Use this whenever the run is
+        meant to serve as evidence that a named check actually executed. With
+        the default (False), a missing ``pyshacl``/``rdflib``/``prov`` silently
+        downgrades the guarantee to whichever checks could run, while the
+        corpus report still records every document as having passed.
     """
 
     ALL_CHECKS = ("schema", "shacl", "round_trip")
@@ -132,12 +139,14 @@ class ProvValidator:
         self,
         checks: Sequence[str] = ALL_CHECKS,
         expected_cardinality: bool = True,
+        require_deps: bool = False,
     ):
         unknown = set(checks) - set(self.ALL_CHECKS)
         if unknown:
             raise ValueError(f"Unknown check(s): {sorted(unknown)}")
         self.checks = tuple(checks)
         self.expected_cardinality = expected_cardinality
+        self.require_deps = require_deps
         # Probe optional deps once, lazily reused across documents.
         self._shacl_graph = None
         self._dep_cache: Dict[str, Optional[str]] = {}
@@ -252,14 +261,25 @@ class ProvValidator:
                 self._dep_cache[module] = str(exc)
         return self._dep_cache[module] is not None
 
+    def _unavailable(self, check: str, reason: str) -> CheckOutcome:
+        """Outcome for a check whose optional dependency is missing.
+
+        Skipped by default; a hard failure under ``require_deps`` so that a
+        corpus can never be reported as having passed a check that never ran.
+        """
+        if self.require_deps:
+            return CheckOutcome(
+                check, "fail",
+                [f"{reason} (required because require_deps=True)"],
+                detail={"reason": reason},
+            )
+        return CheckOutcome(check, "skipped", detail={"reason": reason})
+
     # -- check 2: SHACL -----------------------------------------------------
 
     def _check_shacl(self, doc: Dict[str, Any]) -> CheckOutcome:
         if self._missing("rdflib") or self._missing("pyshacl"):
-            return CheckOutcome(
-                "shacl", "skipped",
-                detail={"reason": "rdflib/pyshacl not installed"},
-            )
+            return self._unavailable("shacl", "rdflib/pyshacl not installed")
         try:
             from pyshacl import validate as shacl_validate
 
@@ -302,10 +322,7 @@ class ProvValidator:
 
     def _check_round_trip(self, doc: Dict[str, Any]) -> CheckOutcome:
         if self._missing("prov") or self._missing("rdflib"):
-            return CheckOutcome(
-                "round_trip", "skipped",
-                detail={"reason": "prov/rdflib not installed"},
-            )
+            return self._unavailable("round_trip", "prov/rdflib not installed")
         try:
             from prov.model import ProvDocument
             import rdflib

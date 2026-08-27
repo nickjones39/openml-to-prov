@@ -106,6 +106,15 @@ Task sources:
         ),
     )
     parser.add_argument(
+        "--require-deps",
+        action="store_true",
+        help=(
+            "Fail a check whose optional dependency (pyshacl, rdflib, prov) is "
+            "missing instead of skipping it. Use whenever the conformance "
+            "report will be cited as evidence that a check actually ran."
+        ),
+    )
+    parser.add_argument(
         "--no-cardinality-check",
         action="store_true",
         help=(
@@ -154,6 +163,7 @@ Task sources:
         ),
         validation_policy=args.validation_policy,
         validation_cardinality=not args.no_cardinality_check,
+        validation_require_deps=args.require_deps,
     )
 
     generator = CorpusGenerator(config)

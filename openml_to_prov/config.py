@@ -27,6 +27,12 @@ class CorpusConfig:
     # Assert the 44-node/128-edge template in the schema check. Disable if you
     # extend the EAA mapping (e.g. 10-fold CV) where counts legitimately differ.
     validation_cardinality: bool = True
+    # Treat a missing optional validation dependency as a failure rather than
+    # skipping the check. Set this whenever the resulting conformance report is
+    # to be cited as evidence that a check actually ran: without it, an
+    # environment lacking pyshacl/rdflib/prov produces a report in which every
+    # document "passed" while only the schema check was ever executed.
+    validation_require_deps: bool = False
 
 
 # =============================================================================
