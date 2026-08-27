@@ -1,7 +1,7 @@
 # openml-to-prov
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20470438.svg)](https://doi.org/10.5281/zenodo.20470438)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22124808.svg)](https://doi.org/10.5281/zenodo.22124808)
 
 **Generate W3C PROV-JSON provenance corpora from OpenML benchmark tasks for reproducible ML provenance research.**
 
@@ -9,7 +9,7 @@
 
 `openml-to-prov` is a reproducible pipeline for generating [W3C PROV](https://www.w3.org/TR/prov-dm/) compliant JSON provenance graphs from [OpenML](https://www.openml.org/) benchmark tasks. The tool is centred on the OpenML-CC18 curated classification benchmark, with extended task coverage for scalability studies.
 
-Designed for research in provenance-aware machine learning, reproducibility, and **provenance-based graph compression**, the tool supports multiple corpus sizes from ~2.3 MB to ~2.7+ GB, enabling validation of compression algorithms at scale.
+Designed for research in provenance-aware machine learning, reproducibility, and **provenance-based graph compression**, the tool supports four corpus sizes spanning 2.4 MB to 2,503 MB (measured on disk, decimal MB), enabling validation of compression algorithms across three orders of magnitude.
 
 The pipeline captures:
 - Datasets (metadata, targets, versions)
@@ -22,7 +22,7 @@ The pipeline captures:
 
 ## Features
 
-- **Scalable corpora**: Four modes from ~2.3 MB to ~2.7+ GB for compression research
+- **Scalable corpora**: Four modes from 2.4 MB to 2,503 MB for compression research
 - **OpenML-CC18 core**: Built on the official curated classification benchmark suite
 - **Extended coverage**: Additional classification and regression tasks for scale
 - **Provenance fidelity**: Conforms to the W3C PROV data model
@@ -39,10 +39,10 @@ The pipeline captures:
 
 | Mode | Tasks | Configs | Runs | Size | Use Case |
 |------|-------|---------|------|------|----------|
-| `light` | 72 | 1 | 72 | ~2.3 MB | Quick testing, CI/CD |
-| `scaled` | 72 | 144 | 10,368 | ~325.2 MB | Medium-scale experiments |
-| `large` | 171 | 144 | 24,624 | ~772 MB | Large-scale validation |
-| `full` | 528 | 144 | 76,032 | ~2.7 GB | Production benchmarking |
+| `light` | 72 | 1 | 72 | 2.4 MB | CI fixture; the only mode using real execution |
+| `scaled` | 72 | 144 | 10,368 | 341 MB | Mid-scale structural studies |
+| `large` | 171 | 144 | 24,624 | 810 MB | Structural scaling validation |
+| `full` | 528 | 144 | 76,032 | 2,503 MB | Largest structural scale |
 
 ### Task Sources
 
@@ -94,7 +94,9 @@ pip install -r requirements.txt
 - `prov`
 - `matplotlib` (for `evaluate` plots only)
 
-> The schema check and the compression layer of `evaluate` run with no extra dependencies. The SHACL and PROV-O round-trip checks, and the RDF/SPARQL layers of `evaluate`, require the packages above; if they are not installed, those steps are skipped gracefully rather than failing.
+> The schema check and the compression layer of `evaluate` run with no extra dependencies. The SHACL and PROV-O round-trip checks, and the RDF/SPARQL layers of `evaluate`, require the packages above.
+>
+> **By default a check whose dependency is missing is skipped, and a skipped check does not fail the document** — so a corpus generated in an environment without these packages yields a report in which every document "passed" while only the schema check actually ran. Pass `--require-deps` whenever the resulting `conformance_report.json` will be cited as evidence: it turns a missing dependency into a hard failure instead.
 
 ### OpenML API Key (for `--real` mode)
 
@@ -118,16 +120,16 @@ If no key is found you'll see a warning and requests may be throttled.
 ### Command Line
 
 ```bash
-# Generate light corpus (~2.3 MB, 72 runs)
+# Generate light corpus (2.4 MB, 72 runs)
 python -m openml_to_prov --mode light
 
-# Generate scaled corpus (~325.2 MB, 10,368 runs)
+# Generate scaled corpus (341 MB, 10,368 runs)
 python -m openml_to_prov --mode scaled
 
-# Generate large corpus (~772 MB, 24,624 runs)
+# Generate large corpus (810 MB, 24,624 runs)
 python -m openml_to_prov --mode large
 
-# Generate full corpus (~2.7 GB, 76,032 runs)
+# Generate full corpus (2,503 MB, 76,032 runs)
 python -m openml_to_prov --mode full
 ```
 
@@ -210,8 +212,9 @@ python -m openml_to_prov --mode light --validate --no-cardinality-check
 - `--validation-checks` — Comma-separated subset of `schema`, `shacl`, `round_trip`. Default: `schema,shacl,round_trip`.
 - `--validation-policy` — On failure: `strict` skips the document and logs it (default), `warn` writes it anyway but flags it in the report, `abort` stops the run.
 - `--no-cardinality-check` — Disable the per-run 44-node / 128-edge template assertion in the schema check. Use when extending the Entity–Activity–Agent mapping (e.g. a different fold count), where node/edge counts legitimately differ.
+- `--require-deps` — Treat a missing optional dependency (`pyshacl`, `rdflib`, `prov`) as a check **failure** rather than skipping it. Use this whenever the conformance report is intended as evidence that a named check actually executed.
 
-The `conformance_report.json` records the checks run, the failure policy, per-check pass/fail/skip counts, total documents validated, and a capped list of any failures with their file paths. Programmatically, the same configuration is available via `CorpusConfig(validate=True, validation_checks=(...), validation_policy="strict", validation_cardinality=True)`, and the `ProvValidator` class can be used standalone:
+The `conformance_report.json` records the failure policy, per-check pass/fail/skip counts, total documents validated, and a capped list of any failures with their file paths. It distinguishes `checks_requested` from `checks_executed`: a check is listed as executed only if it ran against **every** validated document with no skips, and anything short of that is recorded under `checks_not_fully_executed`. Read `checks_executed`, not `checks_requested`, when interpreting a report. Programmatically, the same configuration is available via `CorpusConfig(validate=True, validation_checks=(...), validation_policy="strict", validation_cardinality=True)`, and the `ProvValidator` class can be used standalone:
 
 ```python
 import json
@@ -436,11 +439,11 @@ If you use this software, please cite:
 @software{jones_openml_to_prov_2025,
   author       = {Nicholas Jones},
   title        = {openml-to-prov: Generate W3C PROV corpora from OpenML benchmarks},
-  year         = {2025},
+  year         = {2026},
   publisher    = {Zenodo},
-  version      = {1.2.4},
-  doi          = {10.5281/zenodo.20470438},
-  url          = {https://doi.org/10.5281/zenodo.20470438}
+  version      = {1.3.0},
+  doi          = {10.5281/zenodo.22124808},
+  url          = {https://doi.org/10.5281/zenodo.22124808}
 }
 ```
 
