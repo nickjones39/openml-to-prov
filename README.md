@@ -168,6 +168,25 @@ python -m openml_to_prov --mode light --real              # Real OpenML + sklear
 python -m openml_to_prov --mode light --validate          # Validate each graph before writing
 ```
 
+### Fold Coverage
+
+OpenML-CC18 tasks are defined on the platform with a **ten-fold** stratified cross-validation
+estimation procedure. This tool consumes OpenML's own split indices — so every fold is a
+genuine platform-defined partition, not one re-derived locally — but takes the **first
+`n_folds` of the ten defined folds**, with `n_folds = 5` by default.
+
+Two consequences are worth being explicit about:
+
+- Each fold keeps OpenML's 90/10 train/test ratio, so the individual splits are exactly those
+  the platform specifies. For `credit-g` (task 31, n=1000): train 900, test 100.
+- The five test partitions together cover **half** of each dataset. An aggregate accuracy from
+  a default run is therefore a mean over five of ten folds, and is **not** directly comparable
+  with the ten-fold figures OpenML publishes for the same task.
+
+Set `n_folds=10` in `CorpusConfig` for full coverage and OpenML-comparable aggregates. Note
+that this changes the per-run graph template — the 44-node/128-edge cardinality is a
+consequence of `k=5` — so pass `--no-cardinality-check` when validating such a corpus.
+
 ### Real Execution Mode (`--real`)
 
 By default the corpus is generated with synthetic per-fold metrics and timestamps so it can be produced quickly without any network calls. The `--real` flag switches to **actual OpenML execution**: each task is downloaded from OpenML, scikit-learn is trained with the configured hyperparameters using OpenML's official cross-validation splits, and the PROV graph records real accuracy/R² scores and real wall-clock timestamps.
@@ -248,6 +267,22 @@ doc = json.load(open("prov_corpus/task_3/RandomForest/prov_xxx.json"))
 result = ProvValidator(checks=("schema", "shacl", "round_trip")).validate(doc)
 print(result.valid, result.error_summary())
 ```
+
+#### Verified results
+
+Both released corpora have been validated exhaustively with all three checks executed against
+every document (`--require-deps`, so nothing was silently skipped):
+
+| Corpus | Documents | Passed | Failed | Skipped | Wall clock |
+|---|---|---|---|---|---|
+| `light` (real execution) | 72 | 72 | 0 | 0 | 8.4 s |
+| `full` (synthetic) | 76,032 | 76,032 | 0 | 0 | 9,050 s |
+
+The PROV-O round-trip returns **exactly 535 triples for every one of the 76,104 documents** —
+minimum and maximum alike, across both the real and the synthetic corpus — so the RDF
+projection is invariant in the same way the PROV-JSON graph is.
+
+Reports are written to `conformance_report.json` alongside the corpus manifest.
 
 ### Downstream Evaluation (`openml_to_prov.evaluate`)
 
