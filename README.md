@@ -62,6 +62,30 @@ The pipeline captures:
 - Ridge, Lasso, ElasticNet, SVR
 - KNeighborsRegressor, MLPRegressor, DecisionTreeRegressor, HistGradientBoostingRegressor
 
+Each family contributes 12 configurations to the 144-configuration grid. The hyperparameter
+dimensions varied per classifier family are:
+
+| Classifier | Key hyperparameters | Variation range |
+|---|---|---|
+| RandomForest | `n_estimators`, `max_depth` | 50–300 trees, depth 5–30 |
+| GradientBoosting | `n_estimators`, `learning_rate`, `max_depth` | 50–200, 0.01–0.2, 3–6 |
+| AdaBoost | `n_estimators`, `learning_rate` | 50–200, 0.3–1.5 |
+| ExtraTrees | `n_estimators`, `max_depth` | 50–200, 8–30 |
+| LogisticRegression | `C`, `max_iter` | 0.01–100, 1000–2000 |
+| SVM | `C`, `kernel` | 0.01–10, rbf/linear/poly |
+| KNN | `n_neighbors`, `weights` | 1–25, uniform/distance |
+| MLP | `hidden_layer_sizes`, `max_iter` | (50,)–(256,128), 500–1000 |
+| DecisionTree | `max_depth`, `criterion` | 3–25, gini/entropy |
+| NaiveBayes | `var_smoothing` | 1e-12–1e-5 |
+| BaggingClassifier | `n_estimators`, `max_samples` | 10–100, 0.7–1.0 |
+| HistGradientBoosting | `max_iter`, `learning_rate`, `max_depth` | 50–200, 0.01–0.2, 4–10 |
+
+Every (flow, parameter) combination is content-addressed by SHA-256. Because the hash is taken
+over the hyperparameter dictionary, it identifies a *configuration* rather than a model family:
+the classification-only modes therefore contain exactly 144 distinct flow hashes, and `full`
+contains 203 (85 configurations are parameterised identically for a classifier and its
+regression counterpart, so they hash alike).
+
 ## Installation
 
 Clone the repository and install dependencies:
