@@ -1,6 +1,6 @@
 # Evidence for the round-3 revision (openml-to-prov v1.4.0)
 
-Raw outputs of the experiments reported in *A Scalable Provenance Framework for Reproducible
+Raw outputs of the experiments reported in *A Scalable Provenance Framework and Multi-Scale Corpora for Reproducible
 Machine Learning Benchmarking*, §6.4, §6.8 and §6.10. Each JSON is written by a script in
 `tools/`; the matching `.log` is its console output. The corpora they were run against are the
 v1.3.0 corpora (`prov_*_corpus`, `prov_*_synthetic`) and the ten-fold corpus `prov_light10_real`
