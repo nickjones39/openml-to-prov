@@ -1,7 +1,7 @@
 # openml-to-prov
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17007365.svg)](https://doi.org/10.5281/zenodo.17007365)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23383570.svg)](https://doi.org/10.5281/zenodo.23383570)
 
 **Generate W3C PROV-JSON provenance corpora from OpenML benchmark tasks for reproducible ML provenance research.**
 
@@ -589,7 +589,9 @@ with open("prov_corpus/task_3/RandomForest/prov_xxx.json") as f:
 
 ## Citation
 
-If you use this software, please cite:
+If you use this software, please cite the version you used. The current release is v1.4.0,
+[10.5281/zenodo.23383570](https://doi.org/10.5281/zenodo.23383570); the concept DOI
+[10.5281/zenodo.17007365](https://doi.org/10.5281/zenodo.17007365) always resolves to the latest.
 
 ```bibtex
 @software{jones_openml_to_prov_2025,
@@ -598,8 +600,8 @@ If you use this software, please cite:
   year         = {2026},
   publisher    = {Zenodo},
   version      = {1.4.0},
-  doi          = {10.5281/zenodo.17007365},
-  url          = {https://doi.org/10.5281/zenodo.17007365}
+  doi          = {10.5281/zenodo.23383570},
+  url          = {https://doi.org/10.5281/zenodo.23383570}
 }
 ```
 
