@@ -22,7 +22,7 @@ Task Sources:
   - Regression: OpenML regression tasks for supervised learning coverage
 """
 
-__version__ = "2.0.0"
+__version__ = "1.4.0"
 __author__ = "Nicholas Jones"
 
 from .config import CorpusConfig

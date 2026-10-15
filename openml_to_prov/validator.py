@@ -61,13 +61,33 @@ _ENDPOINT_BUCKET = {
 
 REQUIRED_PREFIXES = ("prov", "e", "a", "ag")
 
-# Expected per-run cardinality for the 5-fold template. These are the
+
+def expected_cardinality(n_folds: int = 5) -> Dict[str, int]:
+    """Per-run cardinality of the template for k-fold cross-validation.
+
+    Entities: 5 run-level + 4 per fold + 1 aggregate = 4k + 6.
+    Activities: experiment + 3 per fold + aggregate = 3k + 2.
+    Edges: used 11k+5, wasGeneratedBy 3k+1, wasAssociatedWith 3k+2,
+    wasInformedBy 3k, wasDerivedFrom 3k, wasAttributedTo k = 24k + 8.
+    """
+    k = n_folds
+    return {
+        "nodes": 7 * k + 9,
+        "edges": 24 * k + 8,
+        "entities": 4 * k + 6,
+        "activities": 3 * k + 2,
+        "agents": 1,
+    }
+
+
+# Expected per-run cardinality for the default 5-fold template. These are the
 # structural invariants H1/H3 assert; a deviation is itself diagnostic.
-EXPECTED_NODES = 44
-EXPECTED_EDGES = 128
-EXPECTED_ENTITIES = 26
-EXPECTED_ACTIVITIES = 17
-EXPECTED_AGENTS = 1
+_K5 = expected_cardinality(5)
+EXPECTED_NODES = _K5["nodes"]          # 44
+EXPECTED_EDGES = _K5["edges"]          # 128
+EXPECTED_ENTITIES = _K5["entities"]    # 26
+EXPECTED_ACTIVITIES = _K5["activities"]  # 17
+EXPECTED_AGENTS = _K5["agents"]        # 1
 
 
 @dataclass
@@ -121,9 +141,12 @@ class ProvValidator:
     checks:
         Which checks to run. Subset of {"schema", "shacl", "round_trip"}.
     expected_cardinality:
-        If True, the schema check also asserts the 44/128 node/edge template.
-        Set False if you intend to extend the EAA mapping (e.g. 10-fold CV),
-        where node/edge counts legitimately differ.
+        If True, the schema check also asserts the per-run node/edge template
+        for ``n_folds`` folds (44/128 at k=5, 79/248 at k=10). Set False only
+        if you extend the EAA mapping itself, so that the counts no longer
+        follow :func:`expected_cardinality`.
+    n_folds:
+        Fold count the cardinality assertion is computed for.
     require_deps:
         If True, a check whose optional dependency is unavailable is reported
         as a *failure* instead of being skipped. Use this whenever the run is
@@ -140,12 +163,14 @@ class ProvValidator:
         checks: Sequence[str] = ALL_CHECKS,
         expected_cardinality: bool = True,
         require_deps: bool = False,
+        n_folds: int = 5,
     ):
         unknown = set(checks) - set(self.ALL_CHECKS)
         if unknown:
             raise ValueError(f"Unknown check(s): {sorted(unknown)}")
         self.checks = tuple(checks)
         self.expected_cardinality = expected_cardinality
+        self.n_folds = n_folds
         self.require_deps = require_deps
         # Probe optional deps once, lazily reused across documents.
         self._shacl_graph = None
@@ -235,12 +260,13 @@ class ProvValidator:
                 "activities": n_act,
                 "agents": n_agt,
             }
+            want = expected_cardinality(self.n_folds)
             checks = [
-                (n_nodes, EXPECTED_NODES, "nodes"),
-                (n_edges, EXPECTED_EDGES, "edges"),
-                (n_ent, EXPECTED_ENTITIES, "entities"),
-                (n_act, EXPECTED_ACTIVITIES, "activities"),
-                (n_agt, EXPECTED_AGENTS, "agents"),
+                (n_nodes, want["nodes"], "nodes"),
+                (n_edges, want["edges"], "edges"),
+                (n_ent, want["entities"], "entities"),
+                (n_act, want["activities"], "activities"),
+                (n_agt, want["agents"], "agents"),
             ]
             for got, want, label in checks:
                 if got != want:

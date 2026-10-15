@@ -4,6 +4,8 @@
 # Whitelist package directory
 !openml_to_prov/
 !openml_to_prov/**
+!tools/
+!tools/**
 
 # Whitelist these files
 !pyproject.toml
@@ -15,3 +17,6 @@
 # Never commit secrets
 .env.claude/
 .claude/
+
+# Bytecode under tools/ (the whitelist above would otherwise admit it)
+tools/__pycache__/

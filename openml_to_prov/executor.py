@@ -1,5 +1,8 @@
 """Real OpenML + sklearn execution engine."""
 
+import hashlib
+import json
+import pickle
 import time
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
@@ -64,26 +67,68 @@ def _iso(ts: float) -> str:
     return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+# Preprocessing applied ahead of every estimator in real execution. The pipeline
+# is built *from* this specification, and the same specification is recorded on
+# the flow entity (``ml:pipeline``), so the provenance states exactly what ran.
+PREPROCESSING_SPEC = {
+    "numeric": [{"step": "SimpleImputer", "strategy": "mean"}],
+    "categorical": [
+        {"step": "SimpleImputer", "strategy": "most_frequent"},
+        {"step": "OrdinalEncoder", "handle_unknown": "use_encoded_value", "unknown_value": -1},
+    ],
+    "column_split": "pandas select_dtypes(include='number') vs the rest",
+    "remainder": "drop",
+}
+
+_STEPS = {"SimpleImputer": SimpleImputer, "OrdinalEncoder": OrdinalEncoder}
+
+
+def _make_step(spec: Dict):
+    return _STEPS[spec["step"]](**{k: v for k, v in spec.items() if k != "step"})
+
+
+def _chain(specs):
+    steps = [_make_step(s) for s in specs]
+    if len(steps) == 1:
+        return steps[0]
+    names = {"SimpleImputer": "imp", "OrdinalEncoder": "enc"}
+    return Pipeline([(names[s["step"]], st) for s, st in zip(specs, steps)])
+
+
 def _build_pipeline(X: pd.DataFrame, estimator_class, cfg: Dict) -> Pipeline:
-    """Preprocessing + estimator pipeline; handles missing values and categoricals."""
+    """Preprocessing + estimator pipeline, built from PREPROCESSING_SPEC."""
     num_cols = X.select_dtypes(include="number").columns.tolist()
     cat_cols = X.select_dtypes(exclude="number").columns.tolist()
 
     transformers = []
     if num_cols:
-        transformers.append(("num", SimpleImputer(strategy="mean"), num_cols))
+        transformers.append(("num", _chain(PREPROCESSING_SPEC["numeric"]), num_cols))
     if cat_cols:
-        transformers.append((
-            "cat",
-            Pipeline([
-                ("imp", SimpleImputer(strategy="most_frequent")),
-                ("enc", OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)),
-            ]),
-            cat_cols,
-        ))
+        transformers.append(("cat", _chain(PREPROCESSING_SPEC["categorical"]), cat_cols))
 
-    pre = ColumnTransformer(transformers, remainder="drop")
+    pre = ColumnTransformer(transformers, remainder=PREPROCESSING_SPEC["remainder"])
     return Pipeline([("pre", pre), ("est", estimator_class(**cfg))])
+
+
+def estimator_path(estimator_class) -> str:
+    """Fully qualified public import path, e.g. sklearn.ensemble.RandomForestClassifier."""
+    mod = estimator_class.__module__.split("._")[0]
+    return f"{mod}.{estimator_class.__name__}"
+
+
+def predictions_digest(y_pred) -> str:
+    """SHA-256 of a prediction vector, canonicalised as a JSON list of strings
+    so the digest does not depend on the array's dtype."""
+    payload = json.dumps([str(v) for v in np.asarray(y_pred).tolist()]).encode()
+    return hashlib.sha256(payload).hexdigest()
+
+
+def data_digest(X: pd.DataFrame, y: pd.Series) -> str:
+    """SHA-256 over pandas' row hashes of the loaded features and target."""
+    h = hashlib.sha256()
+    h.update(pd.util.hash_pandas_object(X, index=True).values.tobytes())
+    h.update(pd.util.hash_pandas_object(y, index=True).values.tobytes())
+    return h.hexdigest()
 
 
 class OpenMLExecutor:
@@ -201,6 +246,9 @@ class OpenMLExecutor:
         meta = {
             "dataset_id": task.dataset_id,
             "dataset_name": dataset.name,
+            "dataset_version": int(dataset.version) if getattr(dataset, "version", None) else None,
+            "dataset_md5": getattr(dataset, "md5_checksum", None),
+            "data_digest": data_digest(X, y),
             "n_samples": int(X.shape[0]),
             "n_features": int(X.shape[1]),
             "n_classes": int(len(np.unique(y))) if is_clf else None,
@@ -241,6 +289,8 @@ class OpenMLExecutor:
 
         return {
             "score": score,
+            "model_digest": hashlib.sha256(pickle.dumps(pipe)).hexdigest(),
+            "pred_digest": predictions_digest(y_pred),
             "train_size": int(len(train_idx)),
             "test_size": int(len(test_idx)),
             "train_start": _iso(t0),
@@ -251,6 +301,7 @@ class OpenMLExecutor:
             "eval_end": _iso(t3),
             "train_duration_s": round(t1 - t0, 4),
             "pred_duration_s": round(t2 - t1, 4),
+            "eval_duration_s": round(t3 - t2, 4),
         }
 
     def execute(self, task_id: int, model_name: str, cfg: Dict,
@@ -275,10 +326,16 @@ class OpenMLExecutor:
         for fold in range(n_folds):
             train_idx, test_idx = task.get_train_test_split_indices(fold=fold, repeat=0)
             result = self.run_fold(X, y, train_idx, test_idx, estimator_class, cfg, task_type)
+            result["fold_index"], result["repeat"] = fold, 0
             fold_results.append(result)
             if self.verbose:
                 print(f"      fold {fold+1}/{n_folds}: "
                       f"{metric_name}={result['score']:.4f}  "
                       f"train={result['train_duration_s']:.2f}s")
 
-        return {"dataset_meta": dataset_meta, "fold_results": fold_results}
+        return {
+            "dataset_meta": dataset_meta,
+            "fold_results": fold_results,
+            "estimator_class": estimator_path(estimator_class),
+            "pipeline_spec": PREPROCESSING_SPEC,
+        }

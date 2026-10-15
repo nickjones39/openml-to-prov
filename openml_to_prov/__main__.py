@@ -115,11 +115,24 @@ Task sources:
         ),
     )
     parser.add_argument(
+        "--n-folds",
+        type=int,
+        default=5,
+        help=(
+            "Number of OpenML cross-validation folds to execute and record, "
+            "taken in order from the task's own split (default: 5, i.e. the "
+            "first five of the ten folds OpenML-CC18 defines; use 10 for the "
+            "full ten-fold protocol). The per-run template is 7k+9 nodes and "
+            "24k+8 edges: 44/128 at k=5, 79/248 at k=10."
+        ),
+    )
+    parser.add_argument(
         "--no-cardinality-check",
         action="store_true",
         help=(
-            "Disable the 44-node/128-edge template assertion in the schema "
-            "check (use when extending the EAA mapping, e.g. 10-fold CV)."
+            "Disable the per-run template assertion in the schema check "
+            "(7k+9 nodes / 24k+8 edges for k folds). Only needed when the "
+            "EAA mapping itself is extended."
         ),
     )
 
@@ -154,6 +167,7 @@ Task sources:
     config = CorpusConfig(
         mode=args.mode,
         output_dir=args.output,
+        n_folds=args.n_folds,
         verbose=not args.quiet,
         pretty_print=not args.compact,
         use_real_execution=args.real,

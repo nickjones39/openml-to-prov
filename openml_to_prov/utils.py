@@ -31,20 +31,40 @@ def get_timestamp(offset_seconds: int = 0) -> str:
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def get_environment_info() -> Dict[str, str]:
+def _installed_version(dist: str) -> str:
+    """Version of an installed distribution, or ``"unavailable"``."""
+    try:
+        from importlib.metadata import version
+        return version(dist)
+    except Exception:
+        return "unavailable"
+
+
+def get_environment_info(extended: bool = False) -> Dict[str, str]:
     """Get runtime environment information.
 
     Keys are qualified with the ``ml:`` namespace so the dict can be splatted
     into a PROV entity's attribute dict without producing bare keys (which
     would violate the PROV-JSON spec).
+
+    Versions are read from the installed distributions. Releases up to v1.3.0
+    wrote fixed strings for scikit-learn ("1.7.1") and openml-python
+    ("0.15.1") whatever was installed. ``extended`` adds the libraries that
+    determine a real execution's numerical result (pandas, SciPy); it is used
+    for real-execution runs only, so that synthetic documents keep the v1.3.0
+    attribute set.
     """
-    return {
+    info = {
         "ml:python_version": platform.python_version(),
         "ml:platform": platform.platform(),
-        "ml:sklearn_version": "1.7.1",
+        "ml:sklearn_version": _installed_version("scikit-learn"),
         "ml:numpy_version": np.__version__,
-        "ml:openml_version": "0.15.1",
+        "ml:openml_version": _installed_version("openml"),
     }
+    if extended:
+        info["ml:pandas_version"] = _installed_version("pandas")
+        info["ml:scipy_version"] = _installed_version("scipy")
+    return info
 
 
 def generate_synthetic_metric(

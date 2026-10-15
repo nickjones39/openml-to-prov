@@ -166,6 +166,7 @@ python -m openml_to_prov --mode full --quiet              # Suppress progress ou
 python -m openml_to_prov --mode full --max-tasks 10       # Limit tasks (for testing)
 python -m openml_to_prov --mode light --real              # Real OpenML + sklearn execution
 python -m openml_to_prov --mode light --validate          # Validate each graph before writing
+python -m openml_to_prov --mode light --real --n-folds 10 # Full ten-fold OpenML-CC18 protocol
 ```
 
 ### Fold Coverage
@@ -183,9 +184,16 @@ Two consequences are worth being explicit about:
   a default run is therefore a mean over five of ten folds, and is **not** directly comparable
   with the ten-fold figures OpenML publishes for the same task.
 
-Set `n_folds=10` in `CorpusConfig` for full coverage and OpenML-comparable aggregates. Note
-that this changes the per-run graph template — the 44-node/128-edge cardinality is a
-consequence of `k=5` — so pass `--no-cardinality-check` when validating such a corpus.
+Pass `--n-folds 10` (or set `n_folds=10` in `CorpusConfig`) for full coverage and
+OpenML-comparable aggregates. The per-run template follows from `k`: `4k+6` entities,
+`3k+2` activities and one agent (`7k+9` nodes) and `24k+8` edges — 44/128 at `k=5`, 79/248
+at `k=10`. Since v1.4.0 the conformance check computes the expected cardinality from
+`n_folds`, so a ten-fold corpus validates without `--no-cardinality-check`.
+
+Why `k=5` by default: it halves real-execution time and corpus size relative to ten folds.
+On the 72 CC18 tasks under the `light` RandomForest configuration, the five-fold and
+ten-fold means differ little (see `tools/tenfold_compare.py`), but they are not the same
+estimate, and only the ten-fold figure is comparable with OpenML's published evaluations.
 
 ### Real Execution Mode (`--real`)
 
@@ -211,6 +219,24 @@ python -m openml_to_prov --mode full   --real --max-tasks 3 --output prov_full_s
 - Tasks that fail (unsupported type, server unavailable) are skipped gracefully and that run falls back to synthetic data.
 - Transient network/server errors trigger automatic retries with exponential backoff.
 - The corpus manifest records `"real_execution": true` so consumers can distinguish real from synthetic runs.
+- Since v1.4.0, real-execution graphs record everything needed to re-execute a run from the
+  graph alone, and content digests that let a re-execution be checked against it:
+
+  | Element | Attribute (real mode) |
+  |---|---|
+  | Flow | `ml:estimator_class` (fully qualified), `ml:pipeline` (preprocessing specification the pipeline is built from) |
+  | Split | `openml:fold_index`, `openml:repeat` (the OpenML split actually used) |
+  | Dataset | `checksum:sha256` over the loaded data, `openml:data_version`, `openml:md5_checksum` |
+  | Model | `checksum:sha256` of the pickled fitted pipeline |
+  | Predictions | `checksum:sha256` of the predicted labels |
+  | Environment | installed versions of scikit-learn, openml, NumPy, pandas, SciPy |
+  | Train / Predict / Evaluate | `ml:duration_s` (sub-second; `prov:*Time` is whole-second) |
+  | Experiment / Aggregate | times taken from the execution, so `wasInformedBy` ordering holds |
+
+  Synthetic graphs keep the v1.3.0 attribute set, so their size and structure are unchanged.
+  Their dataset, model and prediction `checksum:sha256` values are digests of the element
+  identifier, not of content (there is no content), and serve only as stable keys. The same
+  was true of real-execution graphs up to v1.3.0.
 
 Estimated wall-clock per mode at `--real` (measured baseline: `light` = ~44 min wall-clock on an M-series MacBook Pro, of which 41.4 min is fold-level training; larger modes also use heavier classifiers on bigger datasets so real time may exceed the linear estimate):
 
@@ -358,6 +384,32 @@ prov_corpus/
 └── ...                           # 72-528 tasks depending on mode
 ```
 
+## Verification Tools
+
+`tools/` holds three scripts that check a corpus beyond schema conformance. None is needed to
+generate a corpus.
+
+```bash
+# Semantic validation: exact agreement with the published mapping, a subset of
+# W3C PROV-CONSTRAINTS (typing, disjointness, unique generation, derivation
+# acyclicity, timestamp consistency with event ordering), and value consistency
+python tools/semantic_check.py --corpus prov_light_corpus --out sem.json
+
+# Independent re-execution from the PROV records alone. Does not import
+# openml_to_prov; run it in a separate environment pinned to the versions the
+# graphs record (see the script's docstring)
+python tools/reproduce_from_prov.py --corpus prov_light_corpus --out repro.json --cache-dir .cache-repro
+
+# Five-of-ten versus ten-of-ten folds, and placement against OpenML's published
+# RandomForest evaluations
+python tools/tenfold_compare.py --corpus prov_light10 --out ten.json --openml
+
+# Generation time / memory, and RDF load + SPARQL latency at increasing size
+python tools/scaling_eval.py gen --mode scaled --package-root . --output /tmp/g --out gen.json
+python tools/scaling_eval.py rdflib --corpus prov_full_synthetic --out rdflib.json
+python tools/scaling_eval.py oxigraph --corpus prov_full_synthetic --store /tmp/ox --out ox.json
+```
+
 ## PROV Document Structure
 
 Each PROV-JSON file contains a complete provenance graph for one experiment run:
@@ -368,7 +420,7 @@ Each PROV-JSON file contains a complete provenance graph for one experiment run:
 - **Flow**: ML model/algorithm specification
 - **FlowParameters**: Hyperparameter configuration
 - **Environment**: Python version, platform, library versions
-- **Split**: CV fold train/test split indices
+- **Split**: CV fold number and train/test sizes (real mode also: OpenML fold index and repeat)
 - **Model**: Trained model artifact per fold
 - **Predictions**: Model predictions per fold
 - **Metrics**: Evaluation metrics per fold
@@ -382,12 +434,15 @@ Each PROV-JSON file contains a complete provenance graph for one experiment run:
 - **Aggregate**: Cross-fold aggregation
 
 ### Relations
-- `used`: Activity consumed entity
-- `wasGeneratedBy`: Entity produced by activity
-- `wasAssociatedWith`: Activity performed by agent
-- `wasInformedBy`: Activity communication chain
-- `wasAttributedTo`: Entity attributed to agent
-- `wasDerivedFrom`: Entity derivation lineage
+- `used`: Activity consumed entity — Experiment uses dataset, task, flow, parameters,
+  environment; Train uses dataset, split, flow, parameters, environment; Predict uses model,
+  dataset, split; Evaluate uses predictions, split; Aggregate uses the per-fold metrics
+- `wasGeneratedBy`: Model ← Train, Predictions ← Predict, Metrics ← Evaluate,
+  AggregateMetrics ← Aggregate
+- `wasAssociatedWith`: every activity with the software agent
+- `wasInformedBy`: Train ← Experiment, Predict ← Train, Evaluate ← Predict
+- `wasAttributedTo`: each per-fold Model to the software agent
+- `wasDerivedFrom`: Metrics ← Predictions, Split; AggregateMetrics ← per-fold Metrics
 
 ## Example
 

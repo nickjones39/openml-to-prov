@@ -38,6 +38,7 @@ class CorpusGenerator:
     def __init__(self, config: CorpusConfig):
         self.config = config
         self.env_info = get_environment_info()
+        self.env_info_real = get_environment_info(extended=True)
         self.stats = {
             "total_runs": 0,
             "total_files": 0,
@@ -76,6 +77,7 @@ class CorpusGenerator:
                 checks=tuple(config.validation_checks),
                 expected_cardinality=config.validation_cardinality,
                 require_deps=getattr(config, "validation_require_deps", False),
+                n_folds=config.n_folds,
             )
             if config.validate
             else None
@@ -164,10 +166,16 @@ class CorpusGenerator:
         cfg_idx: int,
         task_type: str,
         real_fold_results: Optional[List[Dict]] = None,
+        real_meta: Optional[Dict] = None,
     ) -> ProvDocumentBuilder:
         """Build a PROV document for a single run."""
         b = ProvDocumentBuilder()
         run_id = generate_run_id()
+        # Real execution records what actually ran: content digests, the
+        # installed versions, the preprocessing pipeline, OpenML fold indices,
+        # sub-second durations, and activity times taken from the execution.
+        # Synthetic documents keep the v1.3.0 attribute set unchanged.
+        real = real_fold_results is not None
         ts = get_timestamp()
         metric = ds["metric"]
 
@@ -192,7 +200,22 @@ class CorpusGenerator:
                 "ml:n_samples": ds["n_samples"],
                 "ml:n_features": ds["n_features"],
                 "ml:task_type": task_type,
-                "checksum:sha256": compute_sha256(f"ds_{ds['dataset_id']}"),
+                **(
+                    {
+                        "checksum:sha256": ds["data_digest"],
+                        "ml:digest_of": "loaded features and target (pandas row hashes)",
+                        **{
+                            k: v
+                            for k, v in (
+                                ("openml:data_version", ds.get("dataset_version")),
+                                ("openml:md5_checksum", ds.get("dataset_md5")),
+                            )
+                            if v is not None
+                        },
+                    }
+                    if real
+                    else {"checksum:sha256": compute_sha256(f"ds_{ds['dataset_id']}")}
+                ),
             },
         )
 
@@ -217,6 +240,14 @@ class CorpusGenerator:
                 "prov:type": "openml:Flow",
                 "openml:model": model,
                 "openml:flow_hash": compute_sha256(cfg)[:16],
+                **(
+                    {
+                        "ml:estimator_class": real_meta["estimator_class"],
+                        "ml:pipeline": json.dumps(real_meta["pipeline_spec"], sort_keys=True),
+                    }
+                    if real and real_meta
+                    else {}
+                ),
             },
         )
 
@@ -234,7 +265,13 @@ class CorpusGenerator:
 
         # Environment entity
         env_ent = f"e:env/{run_id}"
-        b.add_entity(env_ent, {"prov:type": "openml:Environment", **self.env_info})
+        b.add_entity(
+            env_ent,
+            {
+                "prov:type": "openml:Environment",
+                **(self.env_info_real if real else self.env_info),
+            },
+        )
 
         # Experiment activity
         exp_act = f"a:experiment/t{task_id}_{model}_cfg{cfg_idx}"
@@ -243,8 +280,12 @@ class CorpusGenerator:
             {
                 "prov:label": f"Experiment: {model} cfg{cfg_idx} task{task_id}",
                 "prov:type": "openml:Experiment",
-                "prov:startTime": ts,
-                "prov:endTime": get_timestamp(60),
+                "prov:startTime": (
+                    min(r["train_start"] for r in real_fold_results) if real else ts
+                ),
+                # In real mode the experiment ends when aggregation does, at
+                # build time; a fixed +60 s offset predates real fold times.
+                "prov:endTime": ts if real else get_timestamp(60),
             },
         )
         b.add_association(exp_act, agent)
@@ -301,6 +342,11 @@ class CorpusGenerator:
                     "fold:number": fn,
                     "fold:train_size": train_sz,
                     "fold:test_size": test_sz,
+                    **(
+                        {"openml:fold_index": rd["fold_index"], "openml:repeat": rd["repeat"]}
+                        if real
+                        else {}
+                    ),
                 },
             )
 
@@ -313,6 +359,7 @@ class CorpusGenerator:
                     "prov:type": "openml:Train",
                     "prov:startTime": train_start,
                     "prov:endTime": train_end,
+                    **({"ml:duration_s": rd["train_duration_s"]} if real else {}),
                 },
             )
             b.add_association(train, agent)
@@ -334,7 +381,14 @@ class CorpusGenerator:
                     "prov:label": f"Model fold {fn}",
                     "prov:type": "openml:Model",
                     "openml:model_name": model,
-                    "checksum:sha256": compute_sha256(f"mdl_{fs}"),
+                    **(
+                        {
+                            "checksum:sha256": rd["model_digest"],
+                            "ml:digest_of": "fitted pipeline (pickle)",
+                        }
+                        if real
+                        else {"checksum:sha256": compute_sha256(f"mdl_{fs}")}
+                    ),
                 },
             )
             b.add_generation(mdl, train)
@@ -349,6 +403,7 @@ class CorpusGenerator:
                     "prov:type": "openml:Predict",
                     "prov:startTime": pred_start,
                     "prov:endTime": pred_end,
+                    **({"ml:duration_s": rd["pred_duration_s"]} if real else {}),
                 },
             )
             b.add_association(pred_act, agent)
@@ -364,7 +419,14 @@ class CorpusGenerator:
                     "prov:label": f"Predictions fold {fn}",
                     "prov:type": "openml:Predictions",
                     "ml:n_predictions": test_sz,
-                    "checksum:sha256": compute_sha256(f"preds_{fs}"),
+                    **(
+                        {
+                            "checksum:sha256": rd["pred_digest"],
+                            "ml:digest_of": "predicted labels (JSON list of strings)",
+                        }
+                        if real
+                        else {"checksum:sha256": compute_sha256(f"preds_{fs}")}
+                    ),
                 },
             )
             b.add_generation(preds, pred_act)
@@ -378,6 +440,7 @@ class CorpusGenerator:
                     "prov:type": "openml:Evaluate",
                     "prov:startTime": eval_start,
                     "prov:endTime": eval_end,
+                    **({"ml:duration_s": rd["eval_duration_s"]} if real else {}),
                 },
             )
             b.add_association(eval_act, agent)
@@ -405,7 +468,11 @@ class CorpusGenerator:
         agg_act = f"a:aggregate/{run_id}"
         b.add_activity(
             agg_act,
-            {"prov:label": "Aggregate", "prov:type": "openml:AggregateEvaluate"},
+            {
+                "prov:label": "Aggregate",
+                "prov:type": "openml:AggregateEvaluate",
+                **({"prov:startTime": ts, "prov:endTime": ts} if real else {}),
+            },
         )
         b.add_association(agg_act, agent)
         for fm in fold_metrics:
@@ -528,6 +595,7 @@ class CorpusGenerator:
             model_dir.mkdir(exist_ok=True)
             for cfg_idx, cfg in enumerate(model_cfgs):
                 real_fold_results = None
+                real_meta = None
                 if task_executor is not None:
                     try:
                         result = task_executor.execute(
@@ -535,6 +603,10 @@ class CorpusGenerator:
                         )
                         ds = result["dataset_meta"]
                         real_fold_results = result["fold_results"]
+                        real_meta = {
+                            "estimator_class": result["estimator_class"],
+                            "pipeline_spec": result["pipeline_spec"],
+                        }
                     except Exception as exc:
                         print(
                             f"    WARNING: real execution failed unexpectedly ({exc}), falling back to synthetic"
@@ -542,7 +614,7 @@ class CorpusGenerator:
                 if real_fold_results is not None:
                     self.stats["real_execution"] = True
                 prov = self.build_prov(
-                    task_id, ds, model, cfg, cfg_idx, task_type, real_fold_results
+                    task_id, ds, model, cfg, cfg_idx, task_type, real_fold_results, real_meta
                 )
                 gs = prov.graph_stats()
                 prov_json = prov.to_json(self.config.pretty_print)
