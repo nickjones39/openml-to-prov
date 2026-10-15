@@ -1,0 +1,56 @@
+4 PROV records; installed: {'python': '3.11.17', 'numpy': '1.26.4', 'sklearn': '1.7.2', 'openml': '0.15.1', 'pandas': '2.2.3', 'scipy': '1.17.1'}
+[1/4] task 146822: 4/5 folds match (12.1s)
+[2/4] task 22: 1/5 folds match (16.0s)
+[3/4] task 9910: 0/5 folds match (20.58s)
+[4/4] task 14969: 0/5 folds match (50.83s)
+{
+ "corpus": "/private/tmp/claude-501/-Users-professional-Desktop-PhD-Labs-4--A-Scalable-Provenance-Framework-for-Reproducible-Machine-Learning-Benchmarking--claude-worktrees-paper-revision-review-d8362a/739c4db7-fcf0-4e40-b102-562bb85f6a25/scratchpad/mism",
+ "installed_versions": {
+  "python": "3.11.17",
+  "numpy": "1.26.4",
+  "sklearn": "1.7.2",
+  "openml": "0.15.1",
+  "pandas": "2.2.3",
+  "scipy": "1.17.1"
+ },
+ "recorded_env_mismatches": [
+  "python: recorded 3.11.7 vs installed 3.11.17",
+  "sklearn: recorded 1.7.1 vs installed 1.7.2"
+ ],
+ "runs_attempted": 4,
+ "runs_reexecuted": 4,
+ "runs_failed": 0,
+ "folds_reexecuted": 20,
+ "folds_score_exact": 5,
+ "folds_sizes_match": 20,
+ "runs_all_folds_exact": 0,
+ "max_abs_diff": 0.020000000000000018,
+ "pred_digests_checked": 0,
+ "pred_digests_match": 0,
+ "assumptions_needed": [
+  "estimator_class",
+  "fold_index_mapping",
+  "preprocessing"
+ ],
+ "fallback_preprocessing": {
+  "numeric": [
+   {
+    "step": "SimpleImputer",
+    "strategy": "mean"
+   }
+  ],
+  "categorical": [
+   {
+    "step": "SimpleImputer",
+    "strategy": "most_frequent"
+   },
+   {
+    "step": "OrdinalEncoder",
+    "handle_unknown": "use_encoded_value",
+    "unknown_value": -1
+   }
+  ],
+  "column_split": "pandas select_dtypes(include='number') vs the rest",
+  "remainder": "drop"
+ }
+}

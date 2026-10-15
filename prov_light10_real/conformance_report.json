@@ -1,0 +1,32 @@
+{
+  "enabled": true,
+  "checks": [
+    "schema",
+    "shacl",
+    "round_trip"
+  ],
+  "checks_requested": [
+    "schema",
+    "shacl",
+    "round_trip"
+  ],
+  "checks_executed": [
+    "schema",
+    "shacl",
+    "round_trip"
+  ],
+  "require_deps": true,
+  "policy": "strict",
+  "documents_validated": 72,
+  "documents_passed": 72,
+  "documents_failed": 0,
+  "documents_skipped_write": 0,
+  "check_pass_counts": {
+    "schema": 72,
+    "shacl": 72,
+    "round_trip": 72
+  },
+  "check_fail_counts": {},
+  "check_skip_counts": {},
+  "failures": []
+}

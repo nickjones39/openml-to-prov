@@ -1,7 +1,7 @@
 # openml-to-prov
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22124808.svg)](https://doi.org/10.5281/zenodo.22124808)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17007365.svg)](https://doi.org/10.5281/zenodo.17007365)
 
 **Generate W3C PROV-JSON provenance corpora from OpenML benchmark tasks for reproducible ML provenance research.**
 
@@ -14,7 +14,7 @@ Designed for research in provenance-aware machine learning, reproducibility, and
 The pipeline captures:
 - Datasets (metadata, targets, versions)
 - Flows and parameter settings
-- Trained models (artefacts, checksums, features/classes)
+- Trained models (artefacts; content digests in real-execution mode)
 - Predictions and CV splits (per-fold granularity)
 - Evaluation metrics (per-fold + aggregate)
 - Timing and environment metadata
@@ -26,10 +26,14 @@ The pipeline captures:
 - **OpenML-CC18 core**: Built on the official curated classification benchmark suite
 - **Extended coverage**: Additional classification and regression tasks for scale
 - **Provenance fidelity**: Conforms to the W3C PROV data model
-- **Reproducibility**: Environment and parameter capture included
+- **Reproducibility**: real-execution graphs record what a re-execution needs (installed library
+  versions, the preprocessing pipeline, OpenML fold indices, content digests of data, model and
+  predictions); `tools/reproduce_from_prov.py` re-executes runs from their graphs alone
 - **Per-fold granularity**: Separate train/predict/evaluate chains for each CV fold
 - **144 model configurations**: 12 classifiers/regressors × 12 hyperparameter settings
 - **Conformance validation**: Optional pre-write checks (PROV-JSON schema, SHACL shapes, PROV-O round-trip) with a machine-readable `conformance_report.json`
+- **Semantic validation**: `tools/semantic_check.py` checks that every graph carries exactly the relations of the published mapping, a subset of W3C PROV-CONSTRAINTS, and value consistency
+- **Any fold count**: `--n-folds k` (default 5, the first five of OpenML-CC18's ten); the template is `7k+9` nodes / `24k+8` edges
 - **Outputs**:
   - PROV-JSON files per run (`prov_*.json`)
   - Corpus manifest with statistics
@@ -43,6 +47,11 @@ The pipeline captures:
 | `scaled` | 72 | 144 | 10,368 | 341 MB | Mid-scale structural studies |
 | `large` | 171 | 144 | 24,624 | 810 MB | Structural scaling validation |
 | `full` | 528 | 144 | 76,032 | 2,503 MB | Largest structural scale |
+
+The four generated corpora (produced with v1.3.0) are archived on Zenodo at
+[10.5281/zenodo.22217219](https://doi.org/10.5281/zenodo.22217219). Generating them with v1.4.0
+gives graphs of identical structure and attribute set: the v1.4.0 changes affect real-execution
+graphs only.
 
 ### Task Sources
 
@@ -255,7 +264,7 @@ By default, documents are written without validation. The `--validate` flag turn
 
 Three independent checks are available:
 
-- **`schema`** — Structural PROV-JSON conformance: required top-level blocks and prefixes, every element carries a `prov:type`, every relation references declared elements, and (by default) the expected 44-node / 128-edge per-run cardinality. No extra dependencies.
+- **`schema`** — Structural PROV-JSON conformance: required top-level blocks and prefixes, every element carries a `prov:type`, every relation references declared elements, and (by default) the expected per-run cardinality for the configured fold count — `7k+9` nodes and `24k+8` edges, i.e. 44/128 at `k=5` and 79/248 at `k=10`. No extra dependencies.
 - **`shacl`** — SHACL shapes validated over the PROV-O graph (requires `rdflib` + `pyshacl`).
 - **`round_trip`** — PROV-O round-trip: the document is parsed to a PROV model, serialised to RDF, round-tripped through PROV-JSON again, and the two RDF graphs are checked for isomorphism (requires `prov` + `rdflib`).
 
@@ -272,7 +281,10 @@ python -m openml_to_prov --mode scaled --validate --validation-checks schema,rou
 # Failure policy: warn (write anyway, flag in report) instead of strict (skip)
 python -m openml_to_prov --mode large --validate --validation-policy warn
 
-# Disable the 44/128 cardinality assertion (e.g. when extending to 10-fold CV)
+# Ten-fold corpus: the cardinality assertion follows --n-folds automatically
+python -m openml_to_prov --mode light --n-folds 10 --validate
+
+# Disable the cardinality assertion (only if you extend the mapping itself)
 python -m openml_to_prov --mode light --validate --no-cardinality-check
 ```
 
@@ -280,7 +292,7 @@ python -m openml_to_prov --mode light --validate --no-cardinality-check
 
 - `--validation-checks` — Comma-separated subset of `schema`, `shacl`, `round_trip`. Default: `schema,shacl,round_trip`.
 - `--validation-policy` — On failure: `strict` skips the document and logs it (default), `warn` writes it anyway but flags it in the report, `abort` stops the run.
-- `--no-cardinality-check` — Disable the per-run 44-node / 128-edge template assertion in the schema check. Use when extending the Entity–Activity–Agent mapping (e.g. a different fold count), where node/edge counts legitimately differ.
+- `--no-cardinality-check` — Disable the per-run template assertion in the schema check. Since v1.4.0 the expected counts are computed from `--n-folds`, so this is needed only when the Entity–Activity–Agent mapping itself is extended.
 - `--require-deps` — Treat a missing optional dependency (`pyshacl`, `rdflib`, `prov`) as a check **failure** rather than skipping it. Use this whenever the conformance report is intended as evidence that a named check actually executed.
 
 The `conformance_report.json` records the failure policy, per-check pass/fail/skip counts, total documents validated, and a capped list of any failures with their file paths. It distinguishes `checks_requested` from `checks_executed`: a check is listed as executed only if it ran against **every** validated document with no skips, and anything short of that is recorded under `checks_not_fully_executed`. Read `checks_executed`, not `checks_requested`, when interpreting a report. Programmatically, the same configuration is available via `CorpusConfig(validate=True, validation_checks=(...), validation_policy="strict", validation_cardinality=True)`, and the `ProvValidator` class can be used standalone:
@@ -303,12 +315,24 @@ every document (`--require-deps`, so nothing was silently skipped):
 |---|---|---|---|---|---|
 | `light` (real execution) | 72 | 72 | 0 | 0 | 8.4 s |
 | `full` (synthetic) | 76,032 | 76,032 | 0 | 0 | 9,050 s |
+| `prov_light10_real` (real, `k=10`, v1.4.0) | 72 | 72 | 0 | 0 | — |
 
 The PROV-O round-trip returns **exactly 535 triples for every one of the 76,104 documents** —
 minimum and maximum alike, across both the real and the synthetic corpus — so the RDF
 projection is invariant in the same way the PROV-JSON graph is.
 
 Reports are written to `conformance_report.json` alongside the corpus manifest.
+
+Beyond conformance, the verification tools (below) established, with outputs in `repro_r3/`:
+
+- **Semantic validation** of all 111,096 v1.3.0 documents: every graph matches the published
+  mapping exactly. It also found that 58 of the 72 real `light` graphs timestamp the experiment
+  activity after some of its folds (it was stamped when the document was built), contradicting
+  PROV-CONSTRAINTS `wasInformedBy` ordering. Fixed in v1.4.0; the ten-fold corpus passes every check.
+- **Re-execution from the graphs alone** of the 72 real `light` runs: 340/360 folds exact under
+  the scikit-learn version the graphs record, and 360/360 under 1.5.2 or 1.8.0 — v1.3.0 wrote the
+  scikit-learn version as a fixed string ("1.7.1"), and the corpus was not produced under it.
+  On the v1.4.0 ten-fold corpus: 720/720 folds and 720/720 prediction digests, no assumptions.
 
 ### Downstream Evaluation (`openml_to_prov.evaluate`)
 
@@ -386,8 +410,10 @@ prov_corpus/
 
 ## Verification Tools
 
-`tools/` holds three scripts that check a corpus beyond schema conformance. None is needed to
-generate a corpus.
+`tools/` holds four scripts that check a corpus beyond schema conformance or measure its cost.
+None is needed to generate a corpus. Their outputs for the paper's round-3 revision are in
+`repro_r3/` (see its README), and the ten-fold real-execution corpus they were run against is
+included as `prov_light10_real/` (72 runs, `--n-folds 10`, v1.4.0).
 
 ```bash
 # Semantic validation: exact agreement with the published mapping, a subset of
@@ -508,6 +534,15 @@ openml_to_prov/
 ├── validator.py      # Conformance validation (schema, SHACL, PROV-O round-trip)
 ├── evaluate.py       # Baseline downstream evaluation (compression, RDF, SPARQL)
 └── utils.py          # Utility functions (hashing, timestamps, metrics)
+
+tools/                # Verification and measurement; independent of corpus generation
+├── semantic_check.py       # Mapping conformance, PROV-CONSTRAINTS subset, value consistency
+├── reproduce_from_prov.py  # Re-execute runs from PROV records alone (imports nothing above)
+├── tenfold_compare.py      # Five- vs ten-fold means; placement against OpenML results
+└── scaling_eval.py         # Generation, RDF load and SPARQL cost at increasing size
+
+repro_r3/             # Outputs of the tools for the paper's round-3 revision (see its README)
+prov_light10_real/    # Ten-fold real-execution corpus (72 runs, v1.4.0)
 ```
 
 ## Use Cases
@@ -528,7 +563,14 @@ python -m openml_to_prov.evaluate --corpus corpus_large --label large --sample 1
 
 ### Reproducibility Studies
 
-Capture complete ML experiment provenance for reproducibility analysis:
+Re-execute real-execution runs from their PROV records and check them against what was recorded
+(run in a separate environment pinned to the versions the graphs record):
+
+```bash
+python tools/reproduce_from_prov.py --corpus prov_light10_real --out repro.json --cache-dir .cache-repro
+```
+
+Or capture and inspect provenance programmatically:
 
 ```python
 from openml_to_prov import CorpusGenerator, CorpusConfig
@@ -555,9 +597,9 @@ If you use this software, please cite:
   title        = {openml-to-prov: Generate W3C PROV corpora from OpenML benchmarks},
   year         = {2026},
   publisher    = {Zenodo},
-  version      = {1.3.0},
-  doi          = {10.5281/zenodo.22124808},
-  url          = {https://doi.org/10.5281/zenodo.22124808}
+  version      = {1.4.0},
+  doi          = {10.5281/zenodo.17007365},
+  url          = {https://doi.org/10.5281/zenodo.17007365}
 }
 ```
 

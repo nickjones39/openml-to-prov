@@ -1,0 +1,765 @@
+{
+ "seed": 42,
+ "workers": 6,
+ "start_conditions": {
+  "idle_load_limit": null,
+  "waited_seconds": 0,
+  "logical_cpus": 12,
+  "loadavg_before": [
+   20.59,
+   21.93,
+   21.07
+  ]
+ },
+ "results": [
+  {
+   "runs": 1000,
+   "triples": 524889,
+   "cumulative_convert_cpu_seconds": 23.6,
+   "cumulative_load_cpu_seconds": 1.7,
+   "cumulative_convert_wall_seconds": 9.8,
+   "cumulative_load_wall_seconds": 0.5,
+   "store_bytes_on_disk": 71465951,
+   "peak_rss_bytes": 864944128,
+   "query_conditions": {
+    "idle_load_limit": null,
+    "waited_seconds": 0,
+    "logical_cpus": 12,
+    "loadavg_before": [
+     21.82,
+     22.15,
+     21.16
+    ],
+    "loadavg_after": [
+     21.52,
+     22.08,
+     21.14
+    ]
+   },
+   "queries": [
+    {
+     "id": "count_runs",
+     "rows": 1,
+     "cpu_seconds_min": 0.1666,
+     "wall_seconds_min": 0.2481,
+     "cpu_seconds_all": [
+      0.1954,
+      0.1798,
+      0.1666
+     ],
+     "wall_seconds_all": [
+      0.2481,
+      0.2935,
+      0.2902
+     ]
+    },
+    {
+     "id": "per_fold_accuracies",
+     "rows": 2385,
+     "cpu_seconds_min": 0.0042,
+     "wall_seconds_min": 0.0064,
+     "cpu_seconds_all": [
+      0.0064,
+      0.0042,
+      0.007
+     ],
+     "wall_seconds_all": [
+      0.0064,
+      0.0163,
+      0.0127
+     ]
+    },
+    {
+     "id": "train_predict_chain",
+     "rows": 5000,
+     "cpu_seconds_min": 0.2343,
+     "wall_seconds_min": 0.3619,
+     "cpu_seconds_all": [
+      0.2343,
+      0.261,
+      0.2648
+     ],
+     "wall_seconds_all": [
+      0.3619,
+      0.3663,
+      0.4419
+     ]
+    },
+    {
+     "id": "model_lineage",
+     "rows": 5000,
+     "cpu_seconds_min": 0.2041,
+     "wall_seconds_min": 0.2958,
+     "cpu_seconds_all": [
+      0.222,
+      0.2041,
+      0.216
+     ],
+     "wall_seconds_all": [
+      0.2958,
+      0.3205,
+      0.3663
+     ]
+    },
+    {
+     "id": "aggregate_derivation",
+     "rows": 5000,
+     "cpu_seconds_min": 0.1896,
+     "wall_seconds_min": 0.2359,
+     "cpu_seconds_all": [
+      0.2165,
+      0.2079,
+      0.1896
+     ],
+     "wall_seconds_all": [
+      0.3887,
+      0.3374,
+      0.2359
+     ]
+    }
+   ]
+  },
+  {
+   "runs": 2000,
+   "triples": 1044704,
+   "cumulative_convert_cpu_seconds": 47.1,
+   "cumulative_load_cpu_seconds": 3.5,
+   "cumulative_convert_wall_seconds": 18.7,
+   "cumulative_load_wall_seconds": 1.0,
+   "store_bytes_on_disk": 141599481,
+   "peak_rss_bytes": 1186742272,
+   "query_conditions": {
+    "idle_load_limit": null,
+    "waited_seconds": 0,
+    "logical_cpus": 12,
+    "loadavg_before": [
+     22.76,
+     22.33,
+     21.24
+    ],
+    "loadavg_after": [
+     43.96,
+     27.04,
+     22.93
+    ]
+   },
+   "queries": [
+    {
+     "id": "count_runs",
+     "rows": 1,
+     "cpu_seconds_min": 0.2811,
+     "wall_seconds_min": 0.5262,
+     "cpu_seconds_all": [
+      0.2945,
+      0.2811,
+      0.2828
+     ],
+     "wall_seconds_all": [
+      0.5262,
+      0.6112,
+      0.6451
+     ]
+    },
+    {
+     "id": "per_fold_accuracies",
+     "rows": 4870,
+     "cpu_seconds_min": 0.0083,
+     "wall_seconds_min": 0.0083,
+     "cpu_seconds_all": [
+      0.0129,
+      0.0083,
+      0.0093
+     ],
+     "wall_seconds_all": [
+      0.0129,
+      0.0083,
+      0.0445
+     ]
+    },
+    {
+     "id": "train_predict_chain",
+     "rows": 10000,
+     "cpu_seconds_min": 0.3965,
+     "wall_seconds_min": 0.7896,
+     "cpu_seconds_all": [
+      0.4257,
+      0.3965,
+      0.4563
+     ],
+     "wall_seconds_all": [
+      1.0424,
+      1.0753,
+      0.7896
+     ]
+    },
+    {
+     "id": "model_lineage",
+     "rows": 10000,
+     "cpu_seconds_min": 0.3392,
+     "wall_seconds_min": 0.7439,
+     "cpu_seconds_all": [
+      0.3392,
+      0.3878,
+      0.3631
+     ],
+     "wall_seconds_all": [
+      0.7439,
+      0.9586,
+      0.8945
+     ]
+    },
+    {
+     "id": "aggregate_derivation",
+     "rows": 10000,
+     "cpu_seconds_min": 0.3325,
+     "wall_seconds_min": 0.5681,
+     "cpu_seconds_all": [
+      0.3325,
+      0.344,
+      0.3392
+     ],
+     "wall_seconds_all": [
+      0.6369,
+      0.6045,
+      0.5681
+     ]
+    }
+   ]
+  },
+  {
+   "runs": 5000,
+   "triples": 2601826,
+   "cumulative_convert_cpu_seconds": 116.3,
+   "cumulative_load_cpu_seconds": 8.5,
+   "cumulative_convert_wall_seconds": 47.6,
+   "cumulative_load_wall_seconds": 2.7,
+   "store_bytes_on_disk": 351167235,
+   "peak_rss_bytes": 2116042752,
+   "query_conditions": {
+    "idle_load_limit": null,
+    "waited_seconds": 0,
+    "logical_cpus": 12,
+    "loadavg_before": [
+     40.28,
+     27.83,
+     23.37
+    ],
+    "loadavg_after": [
+     35.21,
+     27.64,
+     23.42
+    ]
+   },
+   "queries": [
+    {
+     "id": "count_runs",
+     "rows": 1,
+     "cpu_seconds_min": 0.8338,
+     "wall_seconds_min": 1.2491,
+     "cpu_seconds_all": [
+      0.8913,
+      0.852,
+      0.8338
+     ],
+     "wall_seconds_all": [
+      1.3862,
+      1.2491,
+      1.5476
+     ]
+    },
+    {
+     "id": "per_fold_accuracies",
+     "rows": 12010,
+     "cpu_seconds_min": 0.0346,
+     "wall_seconds_min": 0.0897,
+     "cpu_seconds_all": [
+      0.0491,
+      0.0382,
+      0.0346
+     ],
+     "wall_seconds_all": [
+      0.0897,
+      0.1042,
+      0.1591
+     ]
+    },
+    {
+     "id": "train_predict_chain",
+     "rows": 25000,
+     "cpu_seconds_min": 1.305,
+     "wall_seconds_min": 2.3897,
+     "cpu_seconds_all": [
+      1.3268,
+      1.3219,
+      1.305
+     ],
+     "wall_seconds_all": [
+      2.847,
+      2.7039,
+      2.3897
+     ]
+    },
+    {
+     "id": "model_lineage",
+     "rows": 25000,
+     "cpu_seconds_min": 1.0964,
+     "wall_seconds_min": 1.9242,
+     "cpu_seconds_all": [
+      1.1023,
+      1.0965,
+      1.0964
+     ],
+     "wall_seconds_all": [
+      2.4156,
+      1.9242,
+      2.2205
+     ]
+    },
+    {
+     "id": "aggregate_derivation",
+     "rows": 25000,
+     "cpu_seconds_min": 0.9795,
+     "wall_seconds_min": 1.51,
+     "cpu_seconds_all": [
+      0.9866,
+      0.9795,
+      1.002
+     ],
+     "wall_seconds_all": [
+      1.51,
+      1.7359,
+      2.1982
+     ]
+    }
+   ]
+  },
+  {
+   "runs": 10000,
+   "triples": 5196802,
+   "cumulative_convert_cpu_seconds": 226.6,
+   "cumulative_load_cpu_seconds": 17.0,
+   "cumulative_convert_wall_seconds": 94.4,
+   "cumulative_load_wall_seconds": 6.5,
+   "store_bytes_on_disk": 699858294,
+   "peak_rss_bytes": 2594127872,
+   "query_conditions": {
+    "idle_load_limit": null,
+    "waited_seconds": 0,
+    "logical_cpus": 12,
+    "loadavg_before": [
+     35.83,
+     29.05,
+     24.21
+    ],
+    "loadavg_after": [
+     32.76,
+     29.14,
+     24.47
+    ]
+   },
+   "queries": [
+    {
+     "id": "count_runs",
+     "rows": 1,
+     "cpu_seconds_min": 1.3734,
+     "wall_seconds_min": 1.4533,
+     "cpu_seconds_all": [
+      1.3734,
+      1.5826,
+      1.6158
+     ],
+     "wall_seconds_all": [
+      1.4533,
+      2.4074,
+      2.7388
+     ]
+    },
+    {
+     "id": "per_fold_accuracies",
+     "rows": 24050,
+     "cpu_seconds_min": 0.0605,
+     "wall_seconds_min": 0.0882,
+     "cpu_seconds_all": [
+      0.1007,
+      0.0605,
+      0.0612
+     ],
+     "wall_seconds_all": [
+      0.1767,
+      0.1642,
+      0.0882
+     ]
+    },
+    {
+     "id": "train_predict_chain",
+     "rows": 50000,
+     "cpu_seconds_min": 2.3563,
+     "wall_seconds_min": 4.1697,
+     "cpu_seconds_all": [
+      2.3563,
+      2.4042,
+      2.487
+     ],
+     "wall_seconds_all": [
+      6.0982,
+      4.9973,
+      4.1697
+     ]
+    },
+    {
+     "id": "model_lineage",
+     "rows": 50000,
+     "cpu_seconds_min": 2.0628,
+     "wall_seconds_min": 2.7042,
+     "cpu_seconds_all": [
+      2.0628,
+      2.0813,
+      2.1102
+     ],
+     "wall_seconds_all": [
+      3.2106,
+      2.7042,
+      2.9993
+     ]
+    },
+    {
+     "id": "aggregate_derivation",
+     "rows": 50000,
+     "cpu_seconds_min": 1.8762,
+     "wall_seconds_min": 2.7205,
+     "cpu_seconds_all": [
+      1.8762,
+      1.9001,
+      1.9262
+     ],
+     "wall_seconds_all": [
+      2.8577,
+      2.7205,
+      3.0964
+     ]
+    }
+   ]
+  },
+  {
+   "runs": 20000,
+   "triples": 10386642,
+   "cumulative_convert_cpu_seconds": 437.8,
+   "cumulative_load_cpu_seconds": 34.0,
+   "cumulative_convert_wall_seconds": 162.9,
+   "cumulative_load_wall_seconds": 11.7,
+   "store_bytes_on_disk": 1395912548,
+   "peak_rss_bytes": 2601697280,
+   "query_conditions": {
+    "idle_load_limit": null,
+    "waited_seconds": 0,
+    "logical_cpus": 12,
+    "loadavg_before": [
+     28.62,
+     28.83,
+     24.77
+    ],
+    "loadavg_after": [
+     20.65,
+     26.65,
+     24.26
+    ]
+   },
+   "queries": [
+    {
+     "id": "count_runs",
+     "rows": 1,
+     "cpu_seconds_min": 3.3997,
+     "wall_seconds_min": 4.899,
+     "cpu_seconds_all": [
+      3.5744,
+      3.5013,
+      3.3997
+     ],
+     "wall_seconds_all": [
+      4.899,
+      4.9834,
+      5.1015
+     ]
+    },
+    {
+     "id": "per_fold_accuracies",
+     "rows": 47735,
+     "cpu_seconds_min": 0.1308,
+     "wall_seconds_min": 0.1865,
+     "cpu_seconds_all": [
+      0.2155,
+      0.1366,
+      0.1308
+     ],
+     "wall_seconds_all": [
+      0.2735,
+      0.2974,
+      0.1865
+     ]
+    },
+    {
+     "id": "train_predict_chain",
+     "rows": 100000,
+     "cpu_seconds_min": 5.0693,
+     "wall_seconds_min": 7.1142,
+     "cpu_seconds_all": [
+      5.0693,
+      5.2444,
+      5.3093
+     ],
+     "wall_seconds_all": [
+      7.1142,
+      7.3607,
+      8.8426
+     ]
+    },
+    {
+     "id": "model_lineage",
+     "rows": 100000,
+     "cpu_seconds_min": 3.5851,
+     "wall_seconds_min": 3.6381,
+     "cpu_seconds_all": [
+      4.1438,
+      3.6127,
+      3.5851
+     ],
+     "wall_seconds_all": [
+      7.4011,
+      3.6632,
+      3.6381
+     ]
+    },
+    {
+     "id": "aggregate_derivation",
+     "rows": 100000,
+     "cpu_seconds_min": 3.1371,
+     "wall_seconds_min": 3.1664,
+     "cpu_seconds_all": [
+      3.2766,
+      3.2444,
+      3.1371
+     ],
+     "wall_seconds_all": [
+      3.3061,
+      3.2847,
+      3.1664
+     ]
+    }
+   ]
+  },
+  {
+   "runs": 40000,
+   "triples": 20766086,
+   "cumulative_convert_cpu_seconds": 879.0,
+   "cumulative_load_cpu_seconds": 68.1,
+   "cumulative_convert_wall_seconds": 303.8,
+   "cumulative_load_wall_seconds": 21.8,
+   "store_bytes_on_disk": 1631962689,
+   "peak_rss_bytes": 2630893568,
+   "query_conditions": {
+    "idle_load_limit": null,
+    "waited_seconds": 0,
+    "logical_cpus": 12,
+    "loadavg_before": [
+     26.24,
+     27.01,
+     24.84
+    ],
+    "loadavg_after": [
+     25.01,
+     25.92,
+     24.71
+    ]
+   },
+   "queries": [
+    {
+     "id": "count_runs",
+     "rows": 1,
+     "cpu_seconds_min": 7.0467,
+     "wall_seconds_min": 8.4895,
+     "cpu_seconds_all": [
+      7.2143,
+      7.0467,
+      7.2661
+     ],
+     "wall_seconds_all": [
+      8.623,
+      8.4895,
+      10.0552
+     ]
+    },
+    {
+     "id": "per_fold_accuracies",
+     "rows": 95470,
+     "cpu_seconds_min": 0.3274,
+     "wall_seconds_min": 0.3522,
+     "cpu_seconds_all": [
+      0.4592,
+      0.3274,
+      0.3373
+     ],
+     "wall_seconds_all": [
+      0.5441,
+      0.3522,
+      0.4406
+     ]
+    },
+    {
+     "id": "train_predict_chain",
+     "rows": 200000,
+     "cpu_seconds_min": 10.8509,
+     "wall_seconds_min": 13.1702,
+     "cpu_seconds_all": [
+      11.5987,
+      11.3581,
+      10.8509
+     ],
+     "wall_seconds_all": [
+      16.7274,
+      13.7231,
+      13.1702
+     ]
+    },
+    {
+     "id": "model_lineage",
+     "rows": 200000,
+     "cpu_seconds_min": 9.2145,
+     "wall_seconds_min": 11.4483,
+     "cpu_seconds_all": [
+      9.3213,
+      9.3459,
+      9.2145
+     ],
+     "wall_seconds_all": [
+      15.5702,
+      15.7452,
+      11.4483
+     ]
+    },
+    {
+     "id": "aggregate_derivation",
+     "rows": 200000,
+     "cpu_seconds_min": 7.6341,
+     "wall_seconds_min": 9.3666,
+     "cpu_seconds_all": [
+      7.834,
+      7.6341,
+      8.5485
+     ],
+     "wall_seconds_all": [
+      14.8714,
+      9.3666,
+      10.3813
+     ]
+    }
+   ]
+  },
+  {
+   "runs": 76032,
+   "triples": 39465142,
+   "cumulative_convert_cpu_seconds": 1674.1,
+   "cumulative_load_cpu_seconds": 128.4,
+   "cumulative_convert_wall_seconds": 540.9,
+   "cumulative_load_wall_seconds": 37.7,
+   "store_bytes_on_disk": 3095740629,
+   "peak_rss_bytes": 2641559552,
+   "query_conditions": {
+    "idle_load_limit": null,
+    "waited_seconds": 0,
+    "logical_cpus": 12,
+    "loadavg_before": [
+     35.93,
+     29.59,
+     26.48
+    ],
+    "loadavg_after": [
+     22.55,
+     30.34,
+     28.07
+    ]
+   },
+   "queries": [
+    {
+     "id": "count_runs",
+     "rows": 1,
+     "cpu_seconds_min": 12.6081,
+     "wall_seconds_min": 16.7704,
+     "cpu_seconds_all": [
+      13.2309,
+      12.6081,
+      12.9571
+     ],
+     "wall_seconds_all": [
+      21.1877,
+      16.7704,
+      20.1548
+     ]
+    },
+    {
+     "id": "per_fold_accuracies",
+     "rows": 180720,
+     "cpu_seconds_min": 0.8254,
+     "wall_seconds_min": 1.1884,
+     "cpu_seconds_all": [
+      0.9576,
+      0.8254,
+      0.8644
+     ],
+     "wall_seconds_all": [
+      1.2512,
+      1.1884,
+      1.5992
+     ]
+    },
+    {
+     "id": "train_predict_chain",
+     "rows": 380160,
+     "cpu_seconds_min": 20.3972,
+     "wall_seconds_min": 25.5977,
+     "cpu_seconds_all": [
+      20.3972,
+      21.6107,
+      21.3105
+     ],
+     "wall_seconds_all": [
+      35.5575,
+      27.7465,
+      25.5977
+     ]
+    },
+    {
+     "id": "model_lineage",
+     "rows": 380160,
+     "cpu_seconds_min": 13.4985,
+     "wall_seconds_min": 13.7468,
+     "cpu_seconds_all": [
+      16.7877,
+      16.3648,
+      13.4985
+     ],
+     "wall_seconds_all": [
+      20.5967,
+      19.0349,
+      13.7468
+     ]
+    },
+    {
+     "id": "aggregate_derivation",
+     "rows": 380160,
+     "cpu_seconds_min": 11.9396,
+     "wall_seconds_min": 11.951,
+     "cpu_seconds_all": [
+      12.0251,
+      11.9396,
+      12.9155
+     ],
+     "wall_seconds_all": [
+      12.2239,
+      11.951,
+      14.6074
+     ]
+    }
+   ]
+  }
+ ]
+}

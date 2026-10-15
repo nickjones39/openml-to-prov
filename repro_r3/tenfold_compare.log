@@ -1,0 +1,90 @@
+task 10093: 10-fold 0.9949, OpenML RF runs 2766
+task 10101: 10-fold 0.7541, OpenML RF runs 4378
+task 11: 10-fold 0.8319, OpenML RF runs 4722
+task 12: 10-fold 0.9685, OpenML RF runs 3780
+task 125920: 10-fold 0.5820, OpenML RF runs 4309
+task 125922: 10-fold 0.9796, OpenML RF runs 2742
+task 14: 10-fold 0.8300, OpenML RF runs 2813
+task 146195: 10-fold 0.8198, OpenML RF runs 628
+task 146800: 10-fold 0.9935, OpenML RF runs 2000
+task 146817: 10-fold 0.7862, OpenML RF runs 2001
+task 146819: 10-fold 0.9259, OpenML RF runs 2128
+task 146820: 10-fold 0.9820, OpenML RF runs 2002
+task 146821: 10-fold 0.9821, OpenML RF runs 2004
+task 146822: 10-fold 0.9385, OpenML RF runs 2056
+task 146824: 10-fold 0.9785, OpenML RF runs 2003
+task 146825: 10-fold 0.8853, OpenML RF runs 8
+task 14952: 10-fold 0.9733, OpenML RF runs 2002
+task 14954: 10-fold 0.8148, OpenML RF runs 2005
+task 14965: 10-fold 0.9052, OpenML RF runs 2690
+task 14969: 10-fold 0.6783, OpenML RF runs 2802
+task 14970: 10-fold 0.9793, OpenML RF runs 683
+task 15: 10-fold 0.9714, OpenML RF runs 4350
+task 16: 10-fold 0.9595, OpenML RF runs 2724
+task 167119: 10-fold 0.7828, OpenML RF runs 2003
+task 167120: 10-fold 0.5117, OpenML RF runs 270
+task 167121: 10-fold 0.9149, OpenML RF runs 1
+task 167124: 10-fold 0.4706, OpenML RF runs 1
+task 167125: 10-fold 0.9796, OpenML RF runs 0
+task 167140: 10-fold 0.9526, OpenML RF runs 1010
+task 167141: 10-fold 0.9570, OpenML RF runs 1017
+task 18: 10-fold 0.7010, OpenML RF runs 2729
+task 2074: 10-fold 0.9188, OpenML RF runs 2724
+task 2079: 10-fold 0.6792, OpenML RF runs 4420
+task 219: 10-fold 0.9109, OpenML RF runs 2702
+task 22: 10-fold 0.7715, OpenML RF runs 2722
+task 23: 10-fold 0.5228, OpenML RF runs 2742
+task 28: 10-fold 0.9831, OpenML RF runs 2735
+task 29: 10-fold 0.8754, OpenML RF runs 4333
+task 3: 10-fold 0.9903, OpenML RF runs 6494
+task 3021: 10-fold 0.9852, OpenML RF runs 2734
+task 3022: 10-fold 0.9657, OpenML RF runs 4300
+task 31: 10-fold 0.7570, OpenML RF runs 4441
+task 32: 10-fold 0.9919, OpenML RF runs 2801
+task 3481: 10-fold 0.9468, OpenML RF runs 638
+task 3549: 10-fold 0.9917, OpenML RF runs 4335
+task 3560: 10-fold 0.1996, OpenML RF runs 4316
+task 3573: 10-fold 0.9700, OpenML RF runs 3779
+task 37: 10-fold 0.7629, OpenML RF runs 4419
+task 3902: 10-fold 0.9040, OpenML RF runs 2709
+task 3903: 10-fold 0.9028, OpenML RF runs 2712
+task 3904: 10-fold 0.8201, OpenML RF runs 2757
+task 3913: 10-fold 0.8353, OpenML RF runs 4333
+task 3917: 10-fold 0.8573, OpenML RF runs 2865
+task 3918: 10-fold 0.9369, OpenML RF runs 2686
+task 43: 10-fold 0.9524, OpenML RF runs 2740
+task 45: 10-fold 0.9527, OpenML RF runs 2697
+task 49: 10-fold 0.9676, OpenML RF runs 4321
+task 53: 10-fold 0.7517, OpenML RF runs 4334
+task 6: 10-fold 0.9668, OpenML RF runs 10628
+task 7592: 10-fold 0.8576, OpenML RF runs 1861
+task 9910: 10-fold 0.8017, OpenML RF runs 2103
+task 9946: 10-fold 0.9649, OpenML RF runs 4335
+task 9952: 10-fold 0.9127, OpenML RF runs 2712
+task 9957: 10-fold 0.8607, OpenML RF runs 2752
+task 9960: 10-fold 0.9949, OpenML RF runs 2720
+task 9964: 10-fold 0.9429, OpenML RF runs 2744
+task 9971: 10-fold 0.7103, OpenML RF runs 4309
+task 9976: 10-fold 0.7200, OpenML RF runs 2940
+task 9977: 10-fold 0.9698, OpenML RF runs 883
+task 9978: 10-fold 0.9420, OpenML RF runs 2700
+task 9981: 10-fold 0.9241, OpenML RF runs 2856
+task 9985: 10-fold 0.6288, OpenML RF runs 3725
+{
+ "runs": 72,
+ "mean_acc_10": 0.862293525,
+ "mean_acc_5": 0.8618021555555555,
+ "mean_diff_5_minus_10": -0.0004913694444444623,
+ "median_abs_diff": 0.0021567000000000114,
+ "max_abs_diff": 0.04143780000000008,
+ "tasks_abs_diff_over_0.01": 8,
+ "tasks_abs_diff_over_0.02": 3,
+ "v130_tasks_compared": 72,
+ "v130_first5_folds_matching": 340,
+ "v130_first5_folds_total": 360,
+ "tasks_with_openml_rf_runs": 71,
+ "median_openml_rf_runs_per_task": 2734,
+ "median_percentile": 93.70424597364568,
+ "tasks_within_openml_rf_iqr": 15,
+ "tasks_above_openml_rf_median": 56
+}

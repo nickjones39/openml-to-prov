@@ -6,5 +6,5 @@ authors:
     given-names: "Nicholas"
 license: MIT
 version: "1.4.0"
-doi: 10.5281/zenodo.20281044
+doi: 10.5281/zenodo.17007365
 url: "https://github.com/nickjones39/openml-to-prov"

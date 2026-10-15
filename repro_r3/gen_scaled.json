@@ -1,0 +1,27 @@
+{
+ "mode": "scaled",
+ "package_root": "/private/tmp/claude-501/-Users-professional-Desktop-PhD-Labs-4--A-Scalable-Provenance-Framework-for-Reproducible-Machine-Learning-Benchmarking--claude-worktrees-paper-revision-review-d8362a/739c4db7-fcf0-4e40-b102-562bb85f6a25/scratchpad/v130",
+ "runs": 10368,
+ "bytes_prov_json": 340979377,
+ "cpu_seconds": 13.49,
+ "cpu_ms_per_run": 1.301,
+ "wall_seconds": 13.52,
+ "wall_ms_per_run": 1.304,
+ "peak_rss_bytes": 177307648,
+ "manifest_total_bytes": 340979377,
+ "conditions": {
+  "idle_load_limit": null,
+  "waited_seconds": 0,
+  "logical_cpus": 12,
+  "loadavg_before": [
+   12.11,
+   16.75,
+   24.53
+  ],
+  "loadavg_after": [
+   12.42,
+   16.66,
+   24.41
+  ]
+ }
+}

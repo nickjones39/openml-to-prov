@@ -1,0 +1,60 @@
+{
+  "corpus_name": "OpenML PROV Corpus (light)",
+  "version": "2.0",
+  "mode": "light",
+  "created": "2026-10-15T01:45:57Z",
+  "stats": {
+    "total_runs": 72,
+    "total_files": 72,
+    "total_bytes": 4711277,
+    "tasks_processed": 72,
+    "classification_tasks": 72,
+    "regression_tasks": 0,
+    "real_execution": true,
+    "graph_structure": {
+      "nodes_per_graph": {
+        "min": 79,
+        "max": 79,
+        "total": 5688,
+        "avg": 79.0
+      },
+      "edges_per_graph": {
+        "min": 248,
+        "max": 248,
+        "total": 17856,
+        "avg": 248.0
+      },
+      "entities_per_graph": {
+        "min": 46,
+        "max": 46,
+        "total": 3312,
+        "avg": 46.0
+      },
+      "activities_per_graph": {
+        "min": 32,
+        "max": 32,
+        "total": 2304,
+        "avg": 32.0
+      },
+      "agents_per_graph": {
+        "min": 1,
+        "max": 1,
+        "total": 72,
+        "avg": 1.0
+      },
+      "edge_breakdown": {
+        "used": 8280,
+        "wasGeneratedBy": 2232,
+        "wasAssociatedWith": 2304,
+        "wasInformedBy": 2160,
+        "wasAttributedTo": 720,
+        "wasDerivedFrom": 2160
+      }
+    }
+  },
+  "task_sources": {
+    "CC18": 72,
+    "extended_classification": 0,
+    "regression": 0
+  }
+}

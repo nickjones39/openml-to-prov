@@ -1,0 +1,19 @@
+/Users/professional/Desktop/PhD/Labs/openml-to-prov/.venv/lib/python3.11/site-packages/rdflib/plugins/serializers/nt.py:39: UserWarning: NTSerializer always uses UTF-8 encoding. Given encoding was: None
+  warnings.warn(
+/Users/professional/Desktop/PhD/Labs/openml-to-prov/.venv/lib/python3.11/site-packages/rdflib/plugins/serializers/nt.py:39: UserWarning: NTSerializer always uses UTF-8 encoding. Given encoding was: None
+  warnings.warn(
+/Users/professional/Desktop/PhD/Labs/openml-to-prov/.venv/lib/python3.11/site-packages/rdflib/plugins/serializers/nt.py:39: UserWarning: NTSerializer always uses UTF-8 encoding. Given encoding was: None
+  warnings.warn(
+/Users/professional/Desktop/PhD/Labs/openml-to-prov/.venv/lib/python3.11/site-packages/rdflib/plugins/serializers/nt.py:39: UserWarning: NTSerializer always uses UTF-8 encoding. Given encoding was: None
+  warnings.warn(
+/Users/professional/Desktop/PhD/Labs/openml-to-prov/.venv/lib/python3.11/site-packages/rdflib/plugins/serializers/nt.py:39: UserWarning: NTSerializer always uses UTF-8 encoding. Given encoding was: None
+  warnings.warn(
+/Users/professional/Desktop/PhD/Labs/openml-to-prov/.venv/lib/python3.11/site-packages/rdflib/plugins/serializers/nt.py:39: UserWarning: NTSerializer always uses UTF-8 encoding. Given encoding was: None
+  warnings.warn(
+oxigraph n=1000: 524889 triples, load cpu 2s, count_runs=0.1666s, per_fold_accuracies=0.0042s, train_predict_chain=0.2343s, model_lineage=0.2041s, aggregate_derivation=0.1896s
+oxigraph n=2000: 1044704 triples, load cpu 3s, count_runs=0.2811s, per_fold_accuracies=0.0083s, train_predict_chain=0.3965s, model_lineage=0.3392s, aggregate_derivation=0.3325s
+oxigraph n=5000: 2601826 triples, load cpu 8s, count_runs=0.8338s, per_fold_accuracies=0.0346s, train_predict_chain=1.305s, model_lineage=1.0964s, aggregate_derivation=0.9795s
+oxigraph n=10000: 5196802 triples, load cpu 17s, count_runs=1.3734s, per_fold_accuracies=0.0605s, train_predict_chain=2.3563s, model_lineage=2.0628s, aggregate_derivation=1.8762s
+oxigraph n=20000: 10386642 triples, load cpu 34s, count_runs=3.3997s, per_fold_accuracies=0.1308s, train_predict_chain=5.0693s, model_lineage=3.5851s, aggregate_derivation=3.1371s
+oxigraph n=40000: 20766086 triples, load cpu 68s, count_runs=7.0467s, per_fold_accuracies=0.3274s, train_predict_chain=10.8509s, model_lineage=9.2145s, aggregate_derivation=7.6341s
+oxigraph n=76032: 39465142 triples, load cpu 128s, count_runs=12.6081s, per_fold_accuracies=0.8254s, train_predict_chain=20.3972s, model_lineage=13.4985s, aggregate_derivation=11.9396s

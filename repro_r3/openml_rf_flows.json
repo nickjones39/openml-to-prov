@@ -1,0 +1,121 @@
+{
+ "source": "flows with a RandomForestClassifier and no *SearchCV, observed among the first 20000 predictive_accuracy evaluations of OpenML task 3",
+ "flow_ids": [
+  6969,
+  8885,
+  8315,
+  8351,
+  8795,
+  7684,
+  5909,
+  7797,
+  5804,
+  6900,
+  9564,
+  9557,
+  9153,
+  4830,
+  8882,
+  7109,
+  5914,
+  5913,
+  17438
+ ],
+ "flows": [
+  {
+   "id": 6969,
+   "name": "sklearn.pipeline.Pipeline(imputation=openmlstudy14.preprocessing.ConditionalImputer,hotencoding=sklearn.preprocessing.data.OneHotEncoder,variencethreshold=sklearn.feature_selection.variance_threshold.",
+   "evals_on_task3": 3353
+  },
+  {
+   "id": 8885,
+   "name": "sklearn.pipeline.Pipeline(imputation=preprocessing.ConditionalImputer2,catencoding=preprocessing.MultiLabelEncoder,variencethreshold=sklearn.feature_selection.variance_threshold.VarianceThreshold,clf=",
+   "evals_on_task3": 1009
+  },
+  {
+   "id": 8315,
+   "name": "sklearn.pipeline.Pipeline(imputation=hyperimp.utils.preprocessing.ConditionalImputer,hotencoding=sklearn.preprocessing.data.OneHotEncoder,variencethreshold=sklearn.feature_selection.variance_threshold",
+   "evals_on_task3": 1007
+  },
+  {
+   "id": 8351,
+   "name": "sklearn.pipeline.Pipeline(imputation=hyperimp.utils.preprocessing.ConditionalImputer2,hotencoding=sklearn.preprocessing.data.OneHotEncoder,variencethreshold=sklearn.feature_selection.variance_threshol",
+   "evals_on_task3": 1000
+  },
+  {
+   "id": 8795,
+   "name": "sklearn.pipeline.Pipeline(columntransformer=sklearn.compose._column_transformer.ColumnTransformer(numeric=sklearn.pipeline.Pipeline(missingindicator=sklearn.impute.MissingIndicator,imputer=sklearn.pre",
+   "evals_on_task3": 75
+  },
+  {
+   "id": 7684,
+   "name": "sklearn.ensemble.forest.RandomForestClassifier(32)",
+   "evals_on_task3": 16
+  },
+  {
+   "id": 5909,
+   "name": "sklearn.pipeline.Pipeline(imputer=sklearn.preprocessing.imputation.Imputer,pca=sklearn.decomposition.pca.PCA,randomforestclassifier=sklearn.ensemble.forest.RandomForestClassifier)(1)",
+   "evals_on_task3": 10
+  },
+  {
+   "id": 7797,
+   "name": "sklearn.pipeline.Pipeline(imputation=sklearn.preprocessing.imputation.Imputer,hotencoding=sklearn.preprocessing.data.OneHotEncoder,variencethreshold=sklearn.feature_selection.variance_threshold.Varian",
+   "evals_on_task3": 6
+  },
+  {
+   "id": 5804,
+   "name": "sklearn.pipeline.Pipeline(pca=sklearn.decomposition.pca.PCA,randomforestclassifier=sklearn.ensemble.forest.RandomForestClassifier)(1)",
+   "evals_on_task3": 5
+  },
+  {
+   "id": 6900,
+   "name": "sklearn.pipeline.Pipeline(imputer=sklearn.preprocessing.imputation.Imputer,estimator=sklearn.ensemble.forest.RandomForestClassifier)(1)",
+   "evals_on_task3": 4
+  },
+  {
+   "id": 9564,
+   "name": "sklearn.pipeline.Pipeline(preprocessing=sklearn.compose._column_transformer.ColumnTransformer(num_imputer=sklearn.impute.SimpleImputer,basic_encoder=category_encoders.one_hot.OneHotEncoder),preprocess",
+   "evals_on_task3": 1
+  },
+  {
+   "id": 9557,
+   "name": "sklearn.pipeline.Pipeline(preprocessing=sklearn.compose._column_transformer.ColumnTransformer(imputer=sklearn.impute.SimpleImputer,basic_encoder=category_encoders.one_hot.OneHotEncoder),algorithm=skle",
+   "evals_on_task3": 1
+  },
+  {
+   "id": 9153,
+   "name": "sklearn.pipeline.Pipeline(preprocessing=sklearn.compose._column_transformer.ColumnTransformer(imputer=sklearn.impute.SimpleImputer,cat_encoder=category_encoders.target_encoder.TargetEncoder),algorithm",
+   "evals_on_task3": 1
+  },
+  {
+   "id": 4830,
+   "name": "sklearn.ensemble.forest.RandomForestClassifier(13)",
+   "evals_on_task3": 1
+  },
+  {
+   "id": 8882,
+   "name": "sklearn.pipeline.Pipeline(imputation=preprocessing.ConditionalImputer2,hotencoding=sklearn.preprocessing._encoders.OneHotEncoder,variencethreshold=sklearn.feature_selection.variance_threshold.Variance",
+   "evals_on_task3": 1
+  },
+  {
+   "id": 7109,
+   "name": "sklearn.pipeline.Pipeline(imputation=openmlstudy14.preprocessing.ConditionalImputer,hotencoding=sklearn.preprocessing.data.OneHotEncoder,variencethreshold=sklearn.feature_selection.variance_threshold.",
+   "evals_on_task3": 1
+  },
+  {
+   "id": 5914,
+   "name": "sklearn.pipeline.Pipeline(imputer=sklearn.preprocessing.imputation.Imputer,kernelpca=sklearn.decomposition.kernel_pca.KernelPCA,randomforestclassifier=sklearn.ensemble.forest.RandomForestClassifier)(1",
+   "evals_on_task3": 1
+  },
+  {
+   "id": 5913,
+   "name": "sklearn.pipeline.Pipeline(imputer=sklearn.preprocessing.imputation.Imputer,polynomialfeatures=sklearn.preprocessing.data.PolynomialFeatures,pca=sklearn.decomposition.pca.PCA,randomforestclassifier=skl",
+   "evals_on_task3": 1
+  },
+  {
+   "id": 17438,
+   "name": "sklearn.pipeline.Pipeline(columntransformer=sklearn.compose._column_transformer.ColumnTransformer(numeric=sklearn.pipeline.Pipeline(imputer=sklearn.preprocessing.imputation.Imputer,standardscaler=skle",
+   "evals_on_task3": 1
+  }
+ ]
+}

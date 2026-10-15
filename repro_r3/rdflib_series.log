@@ -1,0 +1,5 @@
+rdflib n=1000: 524889 triples, load cpu 52.76s, rss 0.85 GB
+rdflib n=2000: 1044704 triples, load cpu 91.75s, rss 1.49 GB
+rdflib n=5000: 2601826 triples, load cpu 267.82s, rss 3.44 GB
+rdflib n=10000: 5196802 triples, load cpu 482.28s, rss 7.35 GB
+rdflib n=20000: 10386642 triples, load cpu 855.22s, rss 11.92 GB

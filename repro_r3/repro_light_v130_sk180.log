@@ -1,0 +1,124 @@
+72 PROV records; installed: {'python': '3.11.17', 'numpy': '1.26.4', 'sklearn': '1.8.0', 'openml': '0.15.1', 'pandas': '2.2.3', 'scipy': '1.17.1'}
+[1/72] task 10101: 5/5 folds match (2.49s)
+[2/72] task 11: 5/5 folds match (2.51s)
+[3/72] task 10093: 5/5 folds match (3.37s)
+[4/72] task 125920: 5/5 folds match (2.59s)
+[5/72] task 12: 5/5 folds match (14.72s)
+[6/72] task 14: 5/5 folds match (14.82s)
+[7/72] task 146800: 5/5 folds match (6.84s)
+[8/72] task 125922: 5/5 folds match (25.81s)
+[9/72] task 146819: 5/5 folds match (2.42s)
+[10/72] task 146817: 5/5 folds match (7.14s)
+[11/72] task 146821: 5/5 folds match (1.57s)
+[12/72] task 146820: 5/5 folds match (5.64s)
+[13/72] task 146822: 5/5 folds match (5.14s)
+[14/72] task 146824: 5/5 folds match (4.62s)
+[15/72] task 14952: 5/5 folds match (8.9s)
+[16/72] task 14954: 5/5 folds match (2.12s)
+[17/72] task 146195: 5/5 folds match (80.89s)
+[18/72] task 14965: 5/5 folds match (59.34s)
+[19/72] task 14969: 5/5 folds match (50.79s)
+[20/72] task 15: 5/5 folds match (1.55s)
+[21/72] task 16: 5/5 folds match (15.05s)
+[22/72] task 167119: 5/5 folds match (38.51s)
+[23/72] task 14970: 5/5 folds match (161.98s)
+[24/72] task 167120: 5/5 folds match (320.73s)
+[25/72] task 146825: 5/5 folds match (618.91s)
+[26/72] task 167125: 5/5 folds match (13.7s)
+[27/72] task 167140: 5/5 folds match (2.55s)
+[28/72] task 167141: 5/5 folds match (4.64s)
+[29/72] task 18: 5/5 folds match (1.08s)
+[30/72] task 2074: 5/5 folds match (5.71s)
+[31/72] task 2079: 5/5 folds match (0.71s)
+[32/72] task 219: 5/5 folds match (30.4s)
+[33/72] task 22: 5/5 folds match (5.15s)
+[34/72] task 23: 5/5 folds match (1.32s)
+[35/72] task 28: 5/5 folds match (4.66s)
+[36/72] task 29: 5/5 folds match (0.79s)
+[37/72] task 3: 5/5 folds match (1.33s)
+[38/72] task 3021: 5/5 folds match (1.37s)
+[39/72] task 3022: 5/5 folds match (1.23s)
+[40/72] task 31: 5/5 folds match (0.88s)
+[41/72] task 32: 5/5 folds match (7.5s)
+[42/72] task 3481: 5/5 folds match (79.34s)
+[43/72] task 3549: 5/5 folds match (1.29s)
+[44/72] task 3560: 5/5 folds match (0.8s)
+[45/72] task 167121: 5/5 folds match (733.88s)
+[46/72] task 37: 5/5 folds match (0.74s)
+[47/72] task 3902: 5/5 folds match (1.13s)
+[48/72] task 3903: 5/5 folds match (1.61s)
+[49/72] task 3573: 5/5 folds match (193.61s)
+[50/72] task 3913: 5/5 folds match (0.56s)
+[51/72] task 3917: 5/5 folds match (1.31s)
+[52/72] task 3904: 5/5 folds match (9.1s)
+[53/72] task 3918: 5/5 folds match (0.82s)
+[54/72] task 45: 5/5 folds match (2.1s)
+[55/72] task 43: 5/5 folds match (2.71s)
+[56/72] task 49: 5/5 folds match (0.54s)
+[57/72] task 53: 5/5 folds match (0.85s)
+[58/72] task 6: 5/5 folds match (10.09s)
+[59/72] task 9910: 5/5 folds match (8.13s)
+[60/72] task 9946: 5/5 folds match (0.61s)
+[61/72] task 7592: 5/5 folds match (19.91s)
+[62/72] task 9957: 5/5 folds match (0.88s)
+[63/72] task 9952: 5/5 folds match (3.33s)
+[64/72] task 9964: 5/5 folds match (1.34s)
+[65/72] task 9971: 5/5 folds match (0.67s)
+[66/72] task 9960: 5/5 folds match (5.04s)
+[67/72] task 9976: 5/5 folds match (14.03s)
+[68/72] task 9978: 5/5 folds match (3.83s)
+[69/72] task 9981: 5/5 folds match (1.59s)
+[70/72] task 9977: 5/5 folds match (26.71s)
+[71/72] task 9985: 5/5 folds match (11.02s)
+[72/72] task 167124: 5/5 folds match (1743.69s)
+{
+ "corpus": "prov_light_corpus",
+ "installed_versions": {
+  "python": "3.11.17",
+  "numpy": "1.26.4",
+  "sklearn": "1.8.0",
+  "openml": "0.15.1",
+  "pandas": "2.2.3",
+  "scipy": "1.17.1"
+ },
+ "recorded_env_mismatches": [
+  "python: recorded 3.11.7 vs installed 3.11.17",
+  "sklearn: recorded 1.7.1 vs installed 1.8.0"
+ ],
+ "runs_attempted": 72,
+ "runs_reexecuted": 72,
+ "runs_failed": 0,
+ "folds_reexecuted": 360,
+ "folds_score_exact": 360,
+ "folds_sizes_match": 360,
+ "runs_all_folds_exact": 72,
+ "max_abs_diff": 0.0,
+ "pred_digests_checked": 0,
+ "pred_digests_match": 0,
+ "assumptions_needed": [
+  "estimator_class",
+  "fold_index_mapping",
+  "preprocessing"
+ ],
+ "fallback_preprocessing": {
+  "numeric": [
+   {
+    "step": "SimpleImputer",
+    "strategy": "mean"
+   }
+  ],
+  "categorical": [
+   {
+    "step": "SimpleImputer",
+    "strategy": "most_frequent"
+   },
+   {
+    "step": "OrdinalEncoder",
+    "handle_unknown": "use_encoded_value",
+    "unknown_value": -1
+   }
+  ],
+  "column_split": "pandas select_dtypes(include='number') vs the rest",
+  "remainder": "drop"
+ }
+}

@@ -1,0 +1,535 @@
+{
+ "seed": 42,
+ "results": [
+  {
+   "store": "rdflib-memory",
+   "runs": 1000,
+   "triples": 524889,
+   "load_cpu_seconds": 52.76,
+   "load_cpu_ms_per_run": 52.76,
+   "load_wall_seconds": 101.28,
+   "queries": [
+    {
+     "id": "count_runs",
+     "rows": 1,
+     "cpu_seconds_min": 3.876,
+     "wall_seconds_min": 10.2668,
+     "cpu_seconds_all": [
+      4.1043,
+      3.9371,
+      3.876
+     ],
+     "wall_seconds_all": [
+      11.1153,
+      10.959,
+      10.2668
+     ]
+    },
+    {
+     "id": "per_fold_accuracies",
+     "rows": 2385,
+     "cpu_seconds_min": 0.035,
+     "wall_seconds_min": 0.0728,
+     "cpu_seconds_all": [
+      0.0446,
+      1.0456,
+      0.035
+     ],
+     "wall_seconds_all": [
+      0.0728,
+      2.3831,
+      0.1038
+     ]
+    },
+    {
+     "id": "train_predict_chain",
+     "rows": 5000,
+     "cpu_seconds_min": 3.6145,
+     "wall_seconds_min": 7.8937,
+     "cpu_seconds_all": [
+      3.8384,
+      3.6571,
+      3.6145
+     ],
+     "wall_seconds_all": [
+      7.8937,
+      8.5122,
+      13.924
+     ]
+    },
+    {
+     "id": "model_lineage",
+     "rows": 5000,
+     "cpu_seconds_min": 1.8979,
+     "wall_seconds_min": 2.8446,
+     "cpu_seconds_all": [
+      1.9197,
+      1.8979,
+      2.0025
+     ],
+     "wall_seconds_all": [
+      2.8446,
+      3.2258,
+      3.9994
+     ]
+    },
+    {
+     "id": "aggregate_derivation",
+     "rows": 5000,
+     "cpu_seconds_min": 1.7684,
+     "wall_seconds_min": 4.0218,
+     "cpu_seconds_all": [
+      1.7741,
+      1.9098,
+      1.7684
+     ],
+     "wall_seconds_all": [
+      6.5639,
+      9.9975,
+      4.0218
+     ]
+    }
+   ],
+   "peak_rss_bytes": 853065728,
+   "conditions": {
+    "idle_load_limit": null,
+    "waited_seconds": 0,
+    "logical_cpus": 12,
+    "loadavg_before": [
+     21.36,
+     18.36,
+     23.76
+    ],
+    "loadavg_after": [
+     34.23,
+     24.73,
+     25.22
+    ]
+   }
+  },
+  {
+   "store": "rdflib-memory",
+   "runs": 2000,
+   "triples": 1044704,
+   "load_cpu_seconds": 91.75,
+   "load_cpu_ms_per_run": 45.87,
+   "load_wall_seconds": 152.08,
+   "queries": [
+    {
+     "id": "count_runs",
+     "rows": 1,
+     "cpu_seconds_min": 5.7273,
+     "wall_seconds_min": 5.8515,
+     "cpu_seconds_all": [
+      6.2639,
+      5.8206,
+      5.7273
+     ],
+     "wall_seconds_all": [
+      9.5405,
+      6.3512,
+      5.8515
+     ]
+    },
+    {
+     "id": "per_fold_accuracies",
+     "rows": 4870,
+     "cpu_seconds_min": 0.0468,
+     "wall_seconds_min": 0.0468,
+     "cpu_seconds_all": [
+      0.0771,
+      0.0573,
+      0.0468
+     ],
+     "wall_seconds_all": [
+      0.0864,
+      0.0701,
+      0.0468
+     ]
+    },
+    {
+     "id": "train_predict_chain",
+     "rows": 10000,
+     "cpu_seconds_min": 5.1051,
+     "wall_seconds_min": 5.3997,
+     "cpu_seconds_all": [
+      5.5202,
+      5.4061,
+      5.1051
+     ],
+     "wall_seconds_all": [
+      6.0702,
+      6.3845,
+      5.3997
+     ]
+    },
+    {
+     "id": "model_lineage",
+     "rows": 10000,
+     "cpu_seconds_min": 3.2047,
+     "wall_seconds_min": 3.7627,
+     "cpu_seconds_all": [
+      3.3607,
+      3.2047,
+      3.5132
+     ],
+     "wall_seconds_all": [
+      5.0784,
+      3.7627,
+      4.6317
+     ]
+    },
+    {
+     "id": "aggregate_derivation",
+     "rows": 10000,
+     "cpu_seconds_min": 3.4046,
+     "wall_seconds_min": 4.1235,
+     "cpu_seconds_all": [
+      3.4723,
+      3.4046,
+      4.779
+     ],
+     "wall_seconds_all": [
+      4.6121,
+      4.1235,
+      6.6192
+     ]
+    }
+   ],
+   "peak_rss_bytes": 1489747968,
+   "conditions": {
+    "idle_load_limit": null,
+    "waited_seconds": 0,
+    "logical_cpus": 12,
+    "loadavg_before": [
+     33.17,
+     24.66,
+     25.2
+    ],
+    "loadavg_after": [
+     47.54,
+     36.43,
+     29.95
+    ]
+   }
+  },
+  {
+   "store": "rdflib-memory",
+   "runs": 5000,
+   "triples": 2601826,
+   "load_cpu_seconds": 267.82,
+   "load_cpu_ms_per_run": 53.56,
+   "load_wall_seconds": 462.04,
+   "queries": [
+    {
+     "id": "count_runs",
+     "rows": 1,
+     "cpu_seconds_min": 13.7149,
+     "wall_seconds_min": 14.1988,
+     "cpu_seconds_all": [
+      13.7149,
+      14.2696,
+      17.7982
+     ],
+     "wall_seconds_all": [
+      14.1988,
+      16.9271,
+      21.9682
+     ]
+    },
+    {
+     "id": "per_fold_accuracies",
+     "rows": 12010,
+     "cpu_seconds_min": 0.1646,
+     "wall_seconds_min": 0.1907,
+     "cpu_seconds_all": [
+      0.2146,
+      0.1646,
+      0.1661
+     ],
+     "wall_seconds_all": [
+      0.2384,
+      0.1907,
+      0.195
+     ]
+    },
+    {
+     "id": "train_predict_chain",
+     "rows": 25000,
+     "cpu_seconds_min": 13.1883,
+     "wall_seconds_min": 15.1276,
+     "cpu_seconds_all": [
+      15.8015,
+      13.1883,
+      13.7969
+     ],
+     "wall_seconds_all": [
+      17.7302,
+      15.1276,
+      15.2893
+     ]
+    },
+    {
+     "id": "model_lineage",
+     "rows": 25000,
+     "cpu_seconds_min": 9.1691,
+     "wall_seconds_min": 10.6716,
+     "cpu_seconds_all": [
+      9.1691,
+      9.7228,
+      9.5391
+     ],
+     "wall_seconds_all": [
+      10.7631,
+      11.0647,
+      10.6716
+     ]
+    },
+    {
+     "id": "aggregate_derivation",
+     "rows": 25000,
+     "cpu_seconds_min": 8.2914,
+     "wall_seconds_min": 9.7628,
+     "cpu_seconds_all": [
+      8.2914,
+      13.0595,
+      8.9465
+     ],
+     "wall_seconds_all": [
+      10.8724,
+      16.1183,
+      9.7628
+     ]
+    }
+   ],
+   "peak_rss_bytes": 3435298816,
+   "conditions": {
+    "idle_load_limit": null,
+    "waited_seconds": 0,
+    "logical_cpus": 12,
+    "loadavg_before": [
+     45.77,
+     36.63,
+     30.13
+    ],
+    "loadavg_after": [
+     18.71,
+     24.89,
+     27.69
+    ]
+   }
+  },
+  {
+   "store": "rdflib-memory",
+   "runs": 10000,
+   "triples": 5196802,
+   "load_cpu_seconds": 482.28,
+   "load_cpu_ms_per_run": 48.23,
+   "load_wall_seconds": 543.48,
+   "queries": [
+    {
+     "id": "count_runs",
+     "rows": 1,
+     "cpu_seconds_min": 27.2045,
+     "wall_seconds_min": 27.6333,
+     "cpu_seconds_all": [
+      28.8589,
+      27.2045,
+      27.5049
+     ],
+     "wall_seconds_all": [
+      30.3334,
+      27.6333,
+      27.9743
+     ]
+    },
+    {
+     "id": "per_fold_accuracies",
+     "rows": 24050,
+     "cpu_seconds_min": 0.2419,
+     "wall_seconds_min": 0.2475,
+     "cpu_seconds_all": [
+      0.2685,
+      0.2514,
+      0.2419
+     ],
+     "wall_seconds_all": [
+      0.2703,
+      0.2566,
+      0.2475
+     ]
+    },
+    {
+     "id": "train_predict_chain",
+     "rows": 50000,
+     "cpu_seconds_min": 25.3607,
+     "wall_seconds_min": 25.4284,
+     "cpu_seconds_all": [
+      25.9126,
+      25.9299,
+      25.3607
+     ],
+     "wall_seconds_all": [
+      26.1494,
+      26.2148,
+      25.4284
+     ]
+    },
+    {
+     "id": "model_lineage",
+     "rows": 50000,
+     "cpu_seconds_min": 13.4827,
+     "wall_seconds_min": 13.5156,
+     "cpu_seconds_all": [
+      13.6686,
+      13.5647,
+      13.4827
+     ],
+     "wall_seconds_all": [
+      13.7125,
+      13.5998,
+      13.5156
+     ]
+    },
+    {
+     "id": "aggregate_derivation",
+     "rows": 50000,
+     "cpu_seconds_min": 12.8766,
+     "wall_seconds_min": 12.9041,
+     "cpu_seconds_all": [
+      12.9193,
+      12.8766,
+      12.9051
+     ],
+     "wall_seconds_all": [
+      12.9514,
+      12.9041,
+      12.9328
+     ]
+    }
+   ],
+   "peak_rss_bytes": 7350501376,
+   "conditions": {
+    "idle_load_limit": null,
+    "waited_seconds": 0,
+    "logical_cpus": 12,
+    "loadavg_before": [
+     17.74,
+     24.37,
+     27.46
+    ],
+    "loadavg_after": [
+     6.78,
+     10.63,
+     17.61
+    ]
+   }
+  },
+  {
+   "store": "rdflib-memory",
+   "runs": 20000,
+   "triples": 10386642,
+   "load_cpu_seconds": 855.22,
+   "load_cpu_ms_per_run": 42.76,
+   "load_wall_seconds": 892.82,
+   "queries": [
+    {
+     "id": "count_runs",
+     "rows": 1,
+     "cpu_seconds_min": 59.0838,
+     "wall_seconds_min": 78.4679,
+     "cpu_seconds_all": [
+      59.0838,
+      74.6025,
+      77.154
+     ],
+     "wall_seconds_all": [
+      78.4679,
+      110.6784,
+      139.232
+     ]
+    },
+    {
+     "id": "per_fold_accuracies",
+     "rows": 47735,
+     "cpu_seconds_min": 0.7651,
+     "wall_seconds_min": 0.9625,
+     "cpu_seconds_all": [
+      1.0365,
+      0.7868,
+      0.7651
+     ],
+     "wall_seconds_all": [
+      1.4537,
+      0.9625,
+      1.2113
+     ]
+    },
+    {
+     "id": "train_predict_chain",
+     "rows": 100000,
+     "cpu_seconds_min": 60.6159,
+     "wall_seconds_min": 75.5095,
+     "cpu_seconds_all": [
+      71.1064,
+      60.6159,
+      75.61
+     ],
+     "wall_seconds_all": [
+      97.4938,
+      75.5095,
+      103.264
+     ]
+    },
+    {
+     "id": "model_lineage",
+     "rows": 100000,
+     "cpu_seconds_min": 42.1464,
+     "wall_seconds_min": 52.9755,
+     "cpu_seconds_all": [
+      44.158,
+      43.5993,
+      42.1464
+     ],
+     "wall_seconds_all": [
+      66.1434,
+      67.9495,
+      52.9755
+     ]
+    },
+    {
+     "id": "aggregate_derivation",
+     "rows": 100000,
+     "cpu_seconds_min": 30.0874,
+     "wall_seconds_min": 36.7336,
+     "cpu_seconds_all": [
+      39.9504,
+      34.0061,
+      30.0874
+     ],
+     "wall_seconds_all": [
+      46.5694,
+      37.2964,
+      36.7336
+     ]
+    }
+   ],
+   "peak_rss_bytes": 11921768448,
+   "conditions": {
+    "idle_load_limit": null,
+    "waited_seconds": 0,
+    "logical_cpus": 12,
+    "loadavg_before": [
+     6.54,
+     10.39,
+     17.4
+    ],
+    "loadavg_after": [
+     17.99,
+     22.23,
+     21.02
+    ]
+   }
+  }
+ ]
+}

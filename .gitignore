@@ -6,6 +6,10 @@
 !openml_to_prov/**
 !tools/
 !tools/**
+!repro_r3/
+!repro_r3/**
+!prov_light10_real/
+!prov_light10_real/**
 
 # Whitelist these files
 !pyproject.toml
