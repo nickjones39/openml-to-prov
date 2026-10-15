@@ -1,0 +1,77 @@
+{
+  "label": "light",
+  "corpus_dir": "prov_light_corpus_v2",
+  "n_runs": 72,
+  "compression": {
+    "raw_bytes": 2517078,
+    "n_files": 72,
+    "codecs": {
+      "gzip": {
+        "compressed_bytes": 216458,
+        "ratio": 11.63,
+        "space_saving_pct": 91.4,
+        "seconds": 0.077
+      },
+      "bz2": {
+        "compressed_bytes": 98132,
+        "ratio": 25.65,
+        "space_saving_pct": 96.1,
+        "seconds": 0.448
+      },
+      "lzma": {
+        "compressed_bytes": 99308,
+        "ratio": 25.35,
+        "space_saving_pct": 96.05,
+        "seconds": 0.27
+      }
+    }
+  },
+  "rdf_sparql": {
+    "loading": {
+      "skipped": false,
+      "files_loaded": 72,
+      "files_total": 72,
+      "triples": 41475,
+      "load_seconds": 2.957,
+      "triples_per_file": 576.0,
+      "load_seconds_per_file": 0.0411
+    },
+    "queries": [
+      {
+        "id": "count_runs",
+        "description": "Count experiment runs (Experiment activities) in the graph.",
+        "result_rows": 1,
+        "result_value": 72,
+        "seconds": 0.3128
+      },
+      {
+        "id": "per_fold_accuracies",
+        "description": "Retrieve every per-fold accuracy recorded on Metrics entities.",
+        "result_rows": 360,
+        "result_value": null,
+        "seconds": 0.0047
+      },
+      {
+        "id": "train_predict_chain",
+        "description": "Find Predict activities informed by a Train activity (workflow ordering).",
+        "result_rows": 360,
+        "result_value": null,
+        "seconds": 0.236
+      },
+      {
+        "id": "model_lineage",
+        "description": "Trace each trained Model back to the Train activity that generated it.",
+        "result_rows": 360,
+        "result_value": null,
+        "seconds": 0.114
+      },
+      {
+        "id": "aggregate_derivation",
+        "description": "Find AggregateMetrics and the per-fold Metrics they were derived from.",
+        "result_rows": 360,
+        "result_value": null,
+        "seconds": 0.1082
+      }
+    ]
+  }
+}

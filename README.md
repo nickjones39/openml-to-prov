@@ -9,7 +9,7 @@
 
 `openml-to-prov` is a reproducible pipeline for generating [W3C PROV](https://www.w3.org/TR/prov-dm/) compliant JSON provenance graphs from [OpenML](https://www.openml.org/) benchmark tasks. The tool is centred on the OpenML-CC18 curated classification benchmark, with extended task coverage for scalability studies.
 
-Designed for research in provenance-aware machine learning, reproducibility, and **provenance-based graph compression**, the tool supports four corpus sizes spanning 2.4 MB to 2,503 MB (measured on disk, decimal MB), enabling validation of compression algorithms across three orders of magnitude.
+Designed for research in provenance-aware machine learning, reproducibility, and **provenance-based graph compression**, the tool supports four corpus sizes spanning 2.5 MB to 2,503 MB (measured on disk, decimal MB), enabling validation of compression algorithms across three orders of magnitude.
 
 The pipeline captures:
 - Datasets (metadata, targets, versions)
@@ -22,7 +22,7 @@ The pipeline captures:
 
 ## Features
 
-- **Scalable corpora**: Four modes from 2.4 MB to 2,503 MB for compression research
+- **Scalable corpora**: Four modes from 2.5 MB to 2,503 MB for compression research
 - **OpenML-CC18 core**: Built on the official curated classification benchmark suite
 - **Extended coverage**: Additional classification and regression tasks for scale
 - **Provenance fidelity**: Conforms to the W3C PROV data model
@@ -43,15 +43,17 @@ The pipeline captures:
 
 | Mode | Tasks | Configs | Runs | Size | Use Case |
 |------|-------|---------|------|------|----------|
-| `light` | 72 | 1 | 72 | 2.4 MB | CI fixture; the only mode using real execution |
+| `light` | 72 | 1 | 72 | 2.5 MB | CI fixture; the only mode using real execution |
 | `scaled` | 72 | 144 | 10,368 | 341 MB | Mid-scale structural studies |
 | `large` | 171 | 144 | 24,624 | 810 MB | Structural scaling validation |
 | `full` | 528 | 144 | 76,032 | 2,503 MB | Largest structural scale |
 
-The four generated corpora (produced with v1.3.0) are archived on Zenodo at
-[10.5281/zenodo.22217219](https://doi.org/10.5281/zenodo.22217219). Generating them with v1.4.0
-gives graphs of identical structure and attribute set: the v1.4.0 changes affect real-execution
-graphs only.
+The four generated corpora are archived on Zenodo as **openml-to-prov Corpora v1.1**,
+[10.5281/zenodo.23385491](https://doi.org/10.5281/zenodo.23385491) (all versions:
+[10.5281/zenodo.22217218](https://doi.org/10.5281/zenodo.22217218)). In v1.1 the real-execution
+`light` corpus is generated with v1.4.0 (under scikit-learn 1.8.0); the three synthetic corpora
+are those of v1.3.0, and generating them with v1.4.0 gives graphs of identical structure and
+attribute set, since the v1.4.0 changes affect real-execution graphs only.
 
 ### Task Sources
 
@@ -153,7 +155,7 @@ If no key is found you'll see a warning and requests may be throttled.
 ### Command Line
 
 ```bash
-# Generate light corpus (2.4 MB, 72 runs)
+# Generate light corpus (2.5 MB, 72 runs)
 python -m openml_to_prov --mode light
 
 # Generate scaled corpus (341 MB, 10,368 runs)
@@ -313,26 +315,29 @@ every document (`--require-deps`, so nothing was silently skipped):
 
 | Corpus | Documents | Passed | Failed | Skipped | Wall clock |
 |---|---|---|---|---|---|
-| `light` (real execution) | 72 | 72 | 0 | 0 | 8.4 s |
+| `light` (real execution, corpora v1.1) | 72 | 72 | 0 | 0 | 11.1 s |
 | `full` (synthetic) | 76,032 | 76,032 | 0 | 0 | 9,050 s |
 | `prov_light10_real` (real, `k=10`, v1.4.0) | 72 | 72 | 0 | 0 | — |
 
-The PROV-O round-trip returns **exactly 535 triples for every one of the 76,104 documents** —
-minimum and maximum alike, across both the real and the synthetic corpus — so the RDF
-projection is invariant in the same way the PROV-JSON graph is.
+The PROV-O round-trip returns **exactly 535 triples for every `full` document and 579 for every
+`light` document** (its additional real-execution fields) — minimum and maximum alike — so the
+RDF projection is invariant within each corpus in the same way the PROV-JSON graph is.
 
 Reports are written to `conformance_report.json` alongside the corpus manifest.
 
 Beyond conformance, the verification tools (below) established, with outputs in `repro_r3/`:
 
-- **Semantic validation** of all 111,096 v1.3.0 documents: every graph matches the published
-  mapping exactly. It also found that 58 of the 72 real `light` graphs timestamp the experiment
-  activity after some of its folds (it was stamped when the document was built), contradicting
-  PROV-CONSTRAINTS `wasInformedBy` ordering. Fixed in v1.4.0; the ten-fold corpus passes every check.
-- **Re-execution from the graphs alone** of the 72 real `light` runs: 340/360 folds exact under
-  the scikit-learn version the graphs record, and 360/360 under 1.5.2 or 1.8.0 — v1.3.0 wrote the
-  scikit-learn version as a fixed string ("1.7.1"), and the corpus was not produced under it.
-  On the v1.4.0 ten-fold corpus: 720/720 folds and 720/720 prediction digests, no assumptions.
+- **Semantic validation** of all 111,096 documents of corpora v1: every graph matches the published
+  mapping exactly. It also found that 58 of the 72 real `light` graphs of v1 timestamp the
+  experiment activity after some of its folds (it was stamped when the document was built),
+  contradicting PROV-CONSTRAINTS `wasInformedBy` ordering. Fixed in v1.4.0; the v1.1 `light`
+  corpus and the ten-fold corpus pass every check.
+- **Re-execution from the graphs alone** of the 72 real `light` runs of corpora v1: 340/360 folds
+  exact under the scikit-learn version the graphs record, and 360/360 under 1.5.2 or 1.8.0 —
+  v1.3.0 wrote the scikit-learn version as a fixed string ("1.7.1"), and that corpus was not
+  produced under it. The v1.1 `light` corpus, regenerated with v1.4.0, reproduces 360/360 folds
+  and 360/360 prediction digests under its recorded versions, with no assumptions and accuracies
+  identical to v1; the ten-fold corpus reproduces 720/720.
 
 ### Downstream Evaluation (`openml_to_prov.evaluate`)
 

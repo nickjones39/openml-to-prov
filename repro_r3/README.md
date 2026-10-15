@@ -16,6 +16,9 @@ generated with v1.4.0. Paths inside the files are those of the machine the runs 
 | `light10_real.log` | `python -m openml_to_prov --mode light --real --n-folds 10 --validate --require-deps` | §6.10 |
 | `repro_light10_v140.json` | re-execution of the ten-fold corpus (720/720 folds and prediction digests) | §6.10 |
 | `tenfold_compare.json`, `openml_rf_flows.json` | `tenfold_compare.py --openml --compare-v130`; the 19 OpenML RandomForest flow ids used | §6.10 |
+| `light_v2_generation.log`, `conformance_light_v2_full.json` | regeneration of the `light` corpus with v1.4.0 under scikit-learn 1.8.0 (corpora v1.1), and its exhaustive conformance pass | §6.7, §6.8 |
+| `repro_light_v2.json`, `sem_light_v2.json`, `light_v2_vs_v1.json` | re-execution of the v1.1 `light` corpus (360/360 folds and prediction digests), its semantic check, and fold-by-fold accuracy agreement with v1 (360/360) | §6.10 |
+| `eval_light_v2.json` | `openml_to_prov.evaluate` over the v1.1 `light` corpus | §6.9 |
 | `gen_*.json` | `scaling_eval.py gen`, synthetic generation from the archived v1.3.0 code | §6.4, Table 6 |
 | `rdflib_series.json`, `oxigraph_series.json` | `scaling_eval.py rdflib` / `oxigraph` over nested samples of `full` | §6.4, Table 6 |
 

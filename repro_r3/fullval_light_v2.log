@@ -1,0 +1,1 @@
+{"documents_validated": 72, "documents_passed": 72, "documents_failed": 0, "check_pass_counts": {"schema": 72, "shacl": 72, "round_trip": 72}, "check_skip_counts": {}, "round_trip_triples": {"min": 579, "max": 579, "mean": 579.0, "n": 72}, "elapsed_seconds": 11.1}
